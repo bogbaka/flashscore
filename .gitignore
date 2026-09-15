@@ -2,5 +2,7 @@
 __pycache__/
 *.py[cod]
 .env
+.env.local
 .pytest_cache/
 .vscode/
+.neon
