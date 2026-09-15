@@ -4,3 +4,4 @@ pytest
 httpx
 SQLAlchemy
 psycopg[binary]
+python-dotenv
