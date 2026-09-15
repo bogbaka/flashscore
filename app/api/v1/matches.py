@@ -4,6 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
+from app.models.match_event import MatchEvent
+from app.schemas.match_details import MatchDetailsResponse
+from app.schemas.match_event import MatchEventResponse
 from app.services.match import MatchService
 
 
@@ -17,28 +20,70 @@ router = APIRouter(
 def get_matches(
     status: str | None = Query(default=None),
     date: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
     service = MatchService(db)
 
     if status:
-        return service.get_matches_by_status(status)
-
-    if date:
+        matches = service.get_matches_by_status(status)
+    elif date:
         start = datetime.fromisoformat(date)
         end = start + timedelta(days=1)
-        return service.get_matches_by_date(start, end)
+        matches = service.get_matches_by_date(start, end)
+    else:
+        matches = service.get_all_matches()
 
-    return service.get_all_matches()
+    start_index = (page - 1) * limit
+    end_index = start_index + limit
+
+    return {
+        "page": page,
+        "limit": limit,
+        "total": len(matches),
+        "matches": matches[start_index:end_index],
+    }
 
 
-@router.get("/{match_id}")
+@router.get(
+    "/{match_id}/events",
+    response_model=list[MatchEventResponse],
+)
+def get_match_events(
+    match_id: int,
+    db: Session = Depends(get_db),
+):
+    service = MatchService(db)
+
+    match = service.get_match(match_id)
+
+    if match is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Match not found",
+        )
+
+    events = (
+        db.query(MatchEvent)
+        .filter(MatchEvent.match_id == match.id)
+        .order_by(MatchEvent.minute)
+        .all()
+    )
+
+    return events
+
+
+@router.get(
+    "/{match_id}",
+    response_model=MatchDetailsResponse,
+)
 def get_match(
     match_id: int,
     db: Session = Depends(get_db),
 ):
     service = MatchService(db)
-    match = service.get_match(match_id)
+    match = service.get_match_details(match_id)
 
     if match is None:
         raise HTTPException(

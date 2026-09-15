@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from app.api.v1.competitions import router as competitions_router
 from app.api.v1.matches import router as matches_router
 from app.api.v1.teams import router as teams_router
+from app.integrations.football_api.client import FootballAPIClient
 
 
 app = FastAPI(title="Football LiveScore API")
@@ -32,3 +33,13 @@ def root():
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
+
+
+@app.get("/api/v1/football/test")
+def football_api_test():
+    client = FootballAPIClient()
+
+    return client.get(
+        "leagues",
+        {"country": "England"},
+    )

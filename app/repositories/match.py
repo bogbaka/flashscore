@@ -26,7 +26,11 @@ class MatchRepository:
         )
         return list(self.db.scalars(statement).all())
 
-    def get_by_date(self, start: datetime, end: datetime) -> list[Match]:
+    def get_by_date(
+        self,
+        start: datetime,
+        end: datetime,
+    ) -> list[Match]:
         statement = (
             select(Match)
             .where(
