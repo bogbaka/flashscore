@@ -5,3 +5,4 @@ httpx
 SQLAlchemy
 psycopg[binary]
 python-dotenv
+alembic
