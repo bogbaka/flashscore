@@ -11,8 +11,13 @@ class CompetitionRepository:
         self.db = db
 
     def get_all(self) -> list[Competition]:
-        statement = select(Competition).order_by(Competition.name)
-        return list(self.db.scalars(statement).all())
+        statement = select(
+            Competition
+        ).order_by(Competition.name)
+
+        return list(
+            self.db.scalars(statement).all()
+        )
 
     def get_by_id(
         self,
@@ -21,6 +26,7 @@ class CompetitionRepository:
         statement = select(Competition).where(
             Competition.id == competition_id
         )
+
         return self.db.scalar(statement)
 
     def get_matches(
@@ -29,11 +35,15 @@ class CompetitionRepository:
     ) -> list[Match]:
         statement = (
             select(Match)
-            .where(Match.competition_id == competition_id)
+            .where(
+                Match.competition_id == competition_id
+            )
             .order_by(Match.kickoff_at)
         )
 
-        return list(self.db.scalars(statement).all())
+        return list(
+            self.db.scalars(statement).all()
+        )
 
     def get_standings(
         self,
@@ -47,4 +57,27 @@ class CompetitionRepository:
             .order_by(Standing.position)
         )
 
-        return list(self.db.scalars(statement).all())
+        return list(
+            self.db.scalars(statement).all()
+        )
+
+    def search(
+        self,
+        query: str,
+    ) -> list[Competition]:
+        statement = (
+            select(Competition)
+            .where(
+                Competition.name.ilike(
+                    f"%{query}%"
+                )
+                | Competition.country.ilike(
+                    f"%{query}%"
+                )
+            )
+            .order_by(Competition.name)
+        )
+
+        return list(
+            self.db.scalars(statement).all()
+        )

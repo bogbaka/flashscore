@@ -13,11 +13,19 @@ class TeamRepository:
         statement = select(Team).order_by(Team.name)
         return list(self.db.scalars(statement).all())
 
-    def get_by_id(self, team_id: int) -> Team | None:
-        statement = select(Team).where(Team.id == team_id)
+    def get_by_id(
+        self,
+        team_id: int,
+    ) -> Team | None:
+        statement = select(Team).where(
+            Team.id == team_id
+        )
         return self.db.scalar(statement)
 
-    def get_matches(self, team_id: int) -> list[Match]:
+    def get_matches(
+        self,
+        team_id: int,
+    ) -> list[Match]:
         statement = (
             select(Match)
             .where(
@@ -27,4 +35,23 @@ class TeamRepository:
             .order_by(Match.kickoff_at)
         )
 
-        return list(self.db.scalars(statement).all())
+        return list(
+            self.db.scalars(statement).all()
+        )
+
+    def search(
+        self,
+        query: str,
+    ) -> list[Team]:
+        statement = (
+            select(Team)
+            .where(
+                Team.name.ilike(f"%{query}%")
+                | Team.short_name.ilike(f"%{query}%")
+            )
+            .order_by(Team.name)
+        )
+
+        return list(
+            self.db.scalars(statement).all()
+        )
