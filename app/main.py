@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from app.api.v1.competitions import router as competitions_router
 from app.api.v1.matches import router as matches_router
 from app.api.v1.teams import router as teams_router
+from app.api.v1.standings import router as standings_router
 from app.integrations.football_api.client import FootballAPIClient
 
 
@@ -23,7 +24,10 @@ app.include_router(
     matches_router,
     prefix="/api/v1",
 )
-
+app.include_router(
+    standings_router,
+    prefix="/api/v1",
+)
 
 @app.get("/")
 def root():

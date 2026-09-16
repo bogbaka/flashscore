@@ -1,0 +1,21 @@
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.models.standing import Standing
+
+
+class StandingRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_by_competition(
+        self,
+        competition_id: int,
+    ) -> list[Standing]:
+        statement = (
+            select(Standing)
+            .where(Standing.competition_id == competition_id)
+            .order_by(Standing.position)
+        )
+
+        return list(self.db.scalars(statement).all())
