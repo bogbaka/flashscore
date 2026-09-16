@@ -12,3 +12,27 @@ class CompetitionService:
 
     def get_competition(self, competition_id: int):
         return self.repository.get_by_id(competition_id)
+
+    def get_competition_details(
+        self,
+        competition_id: int,
+    ):
+        competition = self.repository.get_by_id(
+            competition_id
+        )
+
+        if competition is None:
+            return None
+
+        return {
+            "id": competition.id,
+            "name": competition.name,
+            "country": competition.country,
+            "logo_url": competition.logo_url,
+            "matches": self.repository.get_matches(
+                competition_id
+            ),
+            "standings": self.repository.get_standings(
+                competition_id
+            ),
+        }
