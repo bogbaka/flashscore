@@ -7,3 +7,6 @@ psycopg[binary]
 python-dotenv
 alembic
 pydantic-settings
+pwdlib[argon2]
+PyJWT
+email-validator
