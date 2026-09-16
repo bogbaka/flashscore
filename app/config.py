@@ -15,3 +15,51 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+SUPPORTED_COMPETITIONS = {
+    "premier-league": {
+        "name": "Premier League",
+        "provider_id": 39,
+        "country": "England",
+    },
+    "la-liga": {
+        "name": "La Liga",
+        "provider_id": 140,
+        "country": "Spain",
+    },
+    "serie-a": {
+        "name": "Serie A",
+        "provider_id": 135,
+        "country": "Italy",
+    },
+    "bundesliga": {
+        "name": "Bundesliga",
+        "provider_id": 78,
+        "country": "Germany",
+    },
+    "ligue-1": {
+        "name": "Ligue 1",
+        "provider_id": 61,
+        "country": "France",
+    },
+    "champions-league": {
+        "name": "UEFA Champions League",
+        "provider_id": 2,
+        "country": "World",
+    },
+    "europa-league": {
+        "name": "UEFA Europa League",
+        "provider_id": 3,
+        "country": "World",
+    },
+    "afcon": {
+        "name": "Africa Cup of Nations",
+        "provider_id": 6,
+        "country": "World",
+    },
+    "caf-champions-league": {
+        "name": "CAF Champions League",
+        "provider_id": 12,
+        "country": "World",
+    },
+}
