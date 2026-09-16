@@ -15,23 +15,52 @@ class MatchService:
         self.db = db
         self.repository = MatchRepository(db)
 
-    def get_all_matches(self) -> list[Match]:
-        return self.repository.get_all()
+    def get_all_matches(
+        self,
+        page: int = 1,
+        limit: int = 20,
+    ) -> tuple[list[Match], int]:
+        return self.repository.get_all(
+            page,
+            limit,
+        )
 
-    def get_match(self, match_id: int) -> Match | None:
+    def get_match(
+        self,
+        match_id: int,
+    ) -> Match | None:
         return self.repository.get_by_id(match_id)
 
-    def get_matches_by_status(self, status: str) -> list[Match]:
-        return self.repository.get_by_status(status)
+    def get_matches_by_status(
+        self,
+        status: str,
+        page: int = 1,
+        limit: int = 20,
+    ) -> tuple[list[Match], int]:
+        return self.repository.get_by_status(
+            status,
+            page,
+            limit,
+        )
 
     def get_matches_by_date(
         self,
         start: datetime,
         end: datetime,
-    ) -> list[Match]:
-        return self.repository.get_by_date(start, end)
+        page: int = 1,
+        limit: int = 20,
+    ) -> tuple[list[Match], int]:
+        return self.repository.get_by_date(
+            start,
+            end,
+            page,
+            limit,
+        )
 
-    def get_match_details(self, match_id: int):
+    def get_match_details(
+        self,
+        match_id: int,
+    ):
         match = self.repository.get_by_id(match_id)
 
         if match is None:
@@ -54,7 +83,9 @@ class MatchService:
 
         events = self.db.scalars(
             select(MatchEvent)
-            .where(MatchEvent.match_id == match.id)
+            .where(
+                MatchEvent.match_id == match.id
+            )
             .order_by(MatchEvent.minute)
         ).all()
 
@@ -72,3 +103,4 @@ class MatchService:
             "away_team": away_team,
             "events": list(events),
         }
+

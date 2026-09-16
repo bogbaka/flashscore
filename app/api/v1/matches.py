@@ -27,22 +27,34 @@ def get_matches(
     service = MatchService(db)
 
     if status:
-        matches = service.get_matches_by_status(status)
+        matches, total = service.get_matches_by_status(
+            status,
+            page,
+            limit,
+        )
+
     elif date:
         start = datetime.fromisoformat(date)
         end = start + timedelta(days=1)
-        matches = service.get_matches_by_date(start, end)
-    else:
-        matches = service.get_all_matches()
 
-    start_index = (page - 1) * limit
-    end_index = start_index + limit
+        matches, total = service.get_matches_by_date(
+            start,
+            end,
+            page,
+            limit,
+        )
+
+    else:
+        matches, total = service.get_all_matches(
+            page,
+            limit,
+        )
 
     return {
         "page": page,
         "limit": limit,
-        "total": len(matches),
-        "matches": matches[start_index:end_index],
+        "total": total,
+        "matches": matches,
     }
 
 
@@ -66,7 +78,9 @@ def get_match_events(
 
     events = (
         db.query(MatchEvent)
-        .filter(MatchEvent.match_id == match.id)
+        .filter(
+            MatchEvent.match_id == match.id
+        )
         .order_by(MatchEvent.minute)
         .all()
     )
@@ -83,6 +97,7 @@ def get_match(
     db: Session = Depends(get_db),
 ):
     service = MatchService(db)
+
     match = service.get_match_details(match_id)
 
     if match is None:
