@@ -1,3 +1,4 @@
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.integrations.football_api.client import FootballAPIClient
@@ -15,6 +16,7 @@ class StandingSyncService:
         self,
         league_id: int,
         season: int,
+        season_id: int,
     ) -> list[Standing]:
         data = self.client.get(
             "standings",
@@ -24,10 +26,10 @@ class StandingSyncService:
             },
         )
 
-        competition = (
-            self.db.query(Competition)
-            .filter(Competition.provider_id == league_id)
-            .first()
+        competition = self.db.scalar(
+            select(Competition).where(
+                Competition.provider_id == league_id
+            )
         )
 
         if competition is None:
@@ -35,23 +37,32 @@ class StandingSyncService:
                 "Competition must be synced before standings."
             )
 
-        standings_data = data["response"][0]["league"]["standings"][0]
+        standings_data = (
+            data["response"][0]
+            ["league"]["standings"][0]
+        )
 
         self.db.query(Standing).filter(
-            Standing.competition_id == competition.id
+            Standing.competition_id == competition.id,
+            Standing.season_id == season_id,
         ).delete()
+
+        teams = self.db.scalars(
+            select(Team)
+        ).all()
+
+        teams_by_provider_id = {
+            team.provider_id: team
+            for team in teams
+        }
 
         standings = []
 
         for item in standings_data:
             team_data = item["team"]
 
-            team = (
-                self.db.query(Team)
-                .filter(
-                    Team.provider_id == team_data["id"]
-                )
-                .first()
+            team = teams_by_provider_id.get(
+                team_data["id"]
             )
 
             if team is None:
@@ -59,6 +70,7 @@ class StandingSyncService:
 
             standing = Standing(
                 competition_id=competition.id,
+                season_id=season_id,
                 team_id=team.id,
                 position=item["rank"],
                 played=item["all"]["played"],
@@ -72,10 +84,5 @@ class StandingSyncService:
 
             self.db.add(standing)
             standings.append(standing)
-
-        self.db.commit()
-
-        for standing in standings:
-            self.db.refresh(standing)
 
         return standings

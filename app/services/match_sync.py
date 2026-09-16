@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.integrations.football_api.client import FootballAPIClient
@@ -17,6 +18,7 @@ class MatchSyncService:
         self,
         league_id: int,
         season: int,
+        season_id: int,
     ) -> list[Match]:
         data = self.client.get(
             "fixtures",
@@ -26,10 +28,10 @@ class MatchSyncService:
             },
         )
 
-        competition = (
-            self.db.query(Competition)
-            .filter(Competition.provider_id == league_id)
-            .first()
+        competition = self.db.scalar(
+            select(Competition).where(
+                Competition.provider_id == league_id
+            )
         )
 
         if competition is None:
@@ -37,38 +39,53 @@ class MatchSyncService:
                 "Competition must be synced before matches."
             )
 
+        teams = self.db.scalars(
+            select(Team)
+        ).all()
+
+        teams_by_provider_id = {
+            team.provider_id: team
+            for team in teams
+        }
+
+        fixtures = data["response"]
+
+        provider_ids = [
+            item["fixture"]["id"]
+            for item in fixtures
+        ]
+
+        existing_matches = self.db.scalars(
+            select(Match).where(
+                Match.provider_id.in_(provider_ids)
+            )
+        ).all()
+
+        matches_by_provider_id = {
+            match.provider_id: match
+            for match in existing_matches
+        }
+
         matches = []
 
-        for item in data["response"]:
+        for item in fixtures:
             fixture = item["fixture"]
-            teams = item["teams"]
+            fixture_teams = item["teams"]
             goals = item["goals"]
 
-            home_team = (
-                self.db.query(Team)
-                .filter(
-                    Team.provider_id == teams["home"]["id"]
-                )
-                .first()
+            home_team = teams_by_provider_id.get(
+                fixture_teams["home"]["id"]
             )
 
-            away_team = (
-                self.db.query(Team)
-                .filter(
-                    Team.provider_id == teams["away"]["id"]
-                )
-                .first()
+            away_team = teams_by_provider_id.get(
+                fixture_teams["away"]["id"]
             )
 
             if home_team is None or away_team is None:
                 continue
 
-            match = (
-                self.db.query(Match)
-                .filter(
-                    Match.provider_id == fixture["id"]
-                )
-                .first()
+            match = matches_by_provider_id.get(
+                fixture["id"]
             )
 
             kickoff_at = datetime.fromisoformat(
@@ -79,6 +96,7 @@ class MatchSyncService:
                 match = Match(
                     provider_id=fixture["id"],
                     competition_id=competition.id,
+                    season_id=season_id,
                     home_team_id=home_team.id,
                     away_team_id=away_team.id,
                     kickoff_at=kickoff_at,
@@ -91,6 +109,7 @@ class MatchSyncService:
 
             else:
                 match.competition_id = competition.id
+                match.season_id = season_id
                 match.home_team_id = home_team.id
                 match.away_team_id = away_team.id
                 match.kickoff_at = kickoff_at
@@ -99,10 +118,5 @@ class MatchSyncService:
                 match.away_score = goals["away"] or 0
 
             matches.append(match)
-
-        self.db.commit()
-
-        for match in matches:
-            self.db.refresh(match)
 
         return matches

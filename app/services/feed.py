@@ -1,104 +1,53 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
+from app.models.match import Match
 from app.repositories.feed import FeedRepository
-
-
-LIVE_STATUSES = [
-    "1H",
-    "HT",
-    "2H",
-    "ET",
-    "P",
-]
-
-FINISHED_STATUSES = [
-    "FT",
-    "AET",
-    "PEN",
-]
-
-UPCOMING_STATUSES = [
-    "NS",
-    "TBD",
-]
 
 
 class FeedService:
     def __init__(self, db: Session):
         self.repository = FeedRepository(db)
 
-    def get_feed(self):
+    def get_feed(
+        self,
+        start: datetime,
+        end: datetime,
+        limit: int = 20,
+    ) -> dict[str, list[Match]]:
         now = datetime.now(timezone.utc)
 
-        start_of_today = now.replace(
-            hour=0,
-            minute=0,
-            second=0,
-            microsecond=0,
+        today_matches = (
+            self.repository.get_matches_by_date(
+                start=start,
+                end=end,
+            )
         )
 
-        end_of_today = start_of_today + timedelta(days=1)
-
-        live_rows = self.repository.get_matches(
-            statuses=LIVE_STATUSES,
+        live_matches = (
+            self.repository.get_live_matches(
+                start=start,
+                end=end,
+            )
         )
 
-        today_rows = self.repository.get_matches(
-            start=start_of_today,
-            end=end_of_today,
+        upcoming_matches = (
+            self.repository.get_upcoming_matches(
+                now=now,
+                limit=limit,
+            )
         )
 
-        upcoming_rows = self.repository.get_matches(
-            start=end_of_today,
-            statuses=UPCOMING_STATUSES,
-        )
-
-        finished_rows = self.repository.get_matches(
-            start=start_of_today,
-            end=end_of_today,
-            statuses=FINISHED_STATUSES,
+        finished_matches = (
+            self.repository.get_finished_matches(
+                limit=limit,
+            )
         )
 
         return {
-            "live": self._serialize(live_rows),
-            "today": self._serialize(today_rows),
-            "upcoming": self._serialize(upcoming_rows),
-            "finished": self._serialize(finished_rows),
+            "live": live_matches,
+            "today": today_matches,
+            "upcoming": upcoming_matches,
+            "finished": finished_matches,
         }
-
-    def _serialize(self, rows):
-        return [
-            {
-                "id": match.id,
-                "kickoff_at": match.kickoff_at,
-                "status": match.status,
-                "home_score": match.home_score,
-                "away_score": match.away_score,
-                "home_team": {
-                    "id": home_team.id,
-                    "name": home_team.name,
-                    "short_name": home_team.short_name,
-                    "logo_url": home_team.logo_url,
-                },
-                "away_team": {
-                    "id": away_team.id,
-                    "name": away_team.name,
-                    "short_name": away_team.short_name,
-                    "logo_url": away_team.logo_url,
-                },
-                "competition": {
-                    "id": competition.id,
-                    "name": competition.name,
-                    "country": competition.country,
-                    "logo_url": competition.logo_url,
-                },
-            }
-            for (
-                match,
-                home_team,
-                away_team,
-                competition,
-            ) in rows
-        ]

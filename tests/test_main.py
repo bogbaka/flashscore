@@ -8,16 +8,14 @@ client = TestClient(app)
 
 def test_root():
     response = client.get("/")
-    
+
     assert response.status_code == 200
-    assert response.json() == {
-        "message": "Football LiveScore API is running!"
-    }
+    assert "Football LiveScore" in response.text
 
 
-def test_health_check():
+def test_health():
     response = client.get("/health")
-    
+
     assert response.status_code == 200
     assert response.json() == {
         "status": "healthy"

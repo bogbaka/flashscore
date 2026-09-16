@@ -1,8 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
-from app.schemas.team import TeamResponse
 from app.schemas.team_details import TeamDetailsResponse
 from app.services.team import TeamService
 
@@ -13,16 +12,32 @@ router = APIRouter(
 )
 
 
-@router.get(
-    "/",
-    response_model=list[TeamResponse],
-)
+@router.get("/")
 def get_teams(
+    page: int = Query(
+        default=1,
+        ge=1,
+    ),
+    limit: int = Query(
+        default=20,
+        ge=1,
+        le=100,
+    ),
     db: Session = Depends(get_db),
 ):
     service = TeamService(db)
 
-    return service.get_all_teams()
+    teams, total = service.get_all_teams(
+        page=page,
+        limit=limit,
+    )
+
+    return {
+        "page": page,
+        "limit": limit,
+        "total": total,
+        "teams": teams,
+    }
 
 
 @router.get(
@@ -34,7 +49,8 @@ def get_team(
     db: Session = Depends(get_db),
 ):
     service = TeamService(db)
-    team = service.get_team_details(team_id)
+
+    team = service.get_team(team_id)
 
     if team is None:
         raise HTTPException(
@@ -42,4 +58,55 @@ def get_team(
             detail="Team not found",
         )
 
-    return team
+    standing = service.get_team_standing(
+        team_id
+    )
+
+    return {
+        "id": team.id,
+        "name": team.name,
+        "short_name": team.short_name,
+        "logo_url": team.logo_url,
+        "standing": standing,
+    }
+
+
+@router.get(
+    "/{team_id}/matches",
+)
+def get_team_matches(
+    team_id: int,
+    page: int = Query(
+        default=1,
+        ge=1,
+    ),
+    limit: int = Query(
+        default=20,
+        ge=1,
+        le=100,
+    ),
+    db: Session = Depends(get_db),
+):
+    service = TeamService(db)
+
+    team = service.get_team(team_id)
+
+    if team is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Team not found",
+        )
+
+    matches, total = service.get_team_matches(
+        team_id=team_id,
+        page=page,
+        limit=limit,
+    )
+
+    return {
+        "page": page,
+        "limit": limit,
+        "total": total,
+        "team": team,
+        "matches": matches,
+    }

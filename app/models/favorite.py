@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import ForeignKey, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database.base import Base
@@ -17,6 +17,10 @@ class Favorite(Base):
             "user_id",
             "competition_id",
             name="uq_favorites_user_competition",
+        ),
+        Index(
+            "ix_favorites_user_id",
+            "user_id",
         ),
     )
 

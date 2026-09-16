@@ -1,6 +1,6 @@
-from app.schemas.match import MatchResponse
+from app.schemas.standing import StandingResponse
 from app.schemas.team import TeamResponse
 
 
 class TeamDetailsResponse(TeamResponse):
-    matches: list[MatchResponse]
+    standing: StandingResponse | None = None

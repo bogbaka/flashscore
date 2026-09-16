@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>{{ title }}</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', path='css/style.css') }}"
+    >
+</head>
+
+<body>
+    <header class="topbar">
+        <div class="container topbar-content">
+            <a href="/" class="logo">
+                ⚽ LiveScore
+            </a>
+
+            <nav class="nav">
+                <a href="/">Matches</a>
+                <a href="/api/v1/competitions">Competitions</a>
+                <a href="/api/v1/standings">Standings</a>
+            </nav>
+
+            <button class="search-button">
+                🔍
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <h1>Football LiveScore</h1>
+            <p>
+                Live scores, fixtures, results and standings.
+            </p>
+        </section>
+
+        <section class="tabs">
+            <button class="tab active">LIVE</button>
+            <button class="tab">TODAY</button>
+            <button class="tab">UPCOMING</button>
+            <button class="tab">FINISHED</button>
+        </section>
+
+        <section class="matches">
+            <div class="section-heading">
+                <h2>Today's Matches</h2>
+            </div>
+
+            <div id="matches-container">
+                <div class="loading">
+                    Loading matches...
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script
+        src="{{ url_for('static', path='js/app.js') }}"
+    ></script>
+</body>
+</html>

@@ -2,6 +2,9 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
+from app.schemas.competition import CompetitionResponse
+from app.schemas.team import TeamResponse
+
 
 class MatchResponse(BaseModel):
     id: int
@@ -13,6 +16,17 @@ class MatchResponse(BaseModel):
     home_score: int
     away_score: int
 
+    competition: CompetitionResponse
+    home_team: TeamResponse
+    away_team: TeamResponse
+
     model_config = {
         "from_attributes": True,
     }
+
+
+class MatchListResponse(BaseModel):
+    page: int
+    limit: int
+    total: int
+    matches: list[MatchResponse]

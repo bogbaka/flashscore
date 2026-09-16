@@ -1,83 +1,76 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.competition import Competition
 from app.models.match import Match
-from app.models.standing import Standing
 
 
 class CompetitionRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_all(self) -> list[Competition]:
-        statement = select(
-            Competition
-        ).order_by(Competition.name)
+    def get_all(
+        self,
+        page: int = 1,
+        limit: int = 20,
+    ) -> tuple[list[Competition], int]:
+        offset = (page - 1) * limit
 
-        return list(
+        statement = (
+            select(Competition)
+            .order_by(Competition.name)
+            .offset(offset)
+            .limit(limit)
+        )
+
+        competitions = list(
             self.db.scalars(statement).all()
         )
+
+        total = self.db.scalar(
+            select(func.count())
+            .select_from(Competition)
+        ) or 0
+
+        return competitions, total
 
     def get_by_id(
         self,
         competition_id: int,
     ) -> Competition | None:
-        statement = select(Competition).where(
-            Competition.id == competition_id
+        return self.db.get(
+            Competition,
+            competition_id,
         )
-
-        return self.db.scalar(statement)
 
     def get_matches(
         self,
         competition_id: int,
-    ) -> list[Match]:
+        page: int = 1,
+        limit: int = 20,
+    ) -> tuple[list[Match], int]:
+        offset = (page - 1) * limit
+
         statement = (
             select(Match)
             .where(
                 Match.competition_id == competition_id
             )
             .order_by(Match.kickoff_at)
+            .offset(offset)
+            .limit(limit)
         )
 
-        return list(
+        matches = list(
             self.db.scalars(statement).all()
         )
 
-    def get_standings(
-        self,
-        competition_id: int,
-    ) -> list[Standing]:
-        statement = (
-            select(Standing)
+        total = self.db.scalar(
+            select(func.count())
+            .select_from(Match)
             .where(
-                Standing.competition_id == competition_id
+                Match.competition_id == competition_id
             )
-            .order_by(Standing.position)
-        )
+        ) or 0
 
-        return list(
-            self.db.scalars(statement).all()
-        )
-
-    def search(
-        self,
-        query: str,
-    ) -> list[Competition]:
-        statement = (
-            select(Competition)
-            .where(
-                Competition.name.ilike(
-                    f"%{query}%"
-                )
-                | Competition.country.ilike(
-                    f"%{query}%"
-                )
-            )
-            .order_by(Competition.name)
-        )
-
-        return list(
-            self.db.scalars(statement).all()
-        )
+        return matches, total

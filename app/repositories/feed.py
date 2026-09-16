@@ -1,66 +1,101 @@
 from datetime import datetime
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session, aliased
+from sqlalchemy.orm import Session
 
-from app.models.competition import Competition
 from app.models.match import Match
-from app.models.team import Team
+
+
+LIVE_STATUSES = {
+    "1H",
+    "HT",
+    "2H",
+    "ET",
+    "BT",
+    "P",
+    "LIVE",
+}
+
+FINISHED_STATUSES = {
+    "FT",
+    "AET",
+    "PEN",
+}
 
 
 class FeedRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_matches(
+    def get_live_matches(
         self,
-        start: datetime | None = None,
-        end: datetime | None = None,
-        statuses: list[str] | None = None,
-    ):
-        home_team = aliased(Team)
-        away_team = aliased(Team)
-
+        start: datetime,
+        end: datetime,
+    ) -> list[Match]:
         statement = (
-            select(
-                Match,
-                home_team,
-                away_team,
-                Competition,
+            select(Match)
+            .where(
+                Match.status.in_(LIVE_STATUSES),
+                Match.kickoff_at >= start,
+                Match.kickoff_at < end,
             )
-            .join(
-                Competition,
-                Match.competition_id == Competition.id,
-            )
-            .join(
-                home_team,
-                Match.home_team_id == home_team.id,
-            )
-            .join(
-                away_team,
-                Match.away_team_id == away_team.id,
-            )
-        )
-
-        if start is not None:
-            statement = statement.where(
-                Match.kickoff_at >= start
-            )
-
-        if end is not None:
-            statement = statement.where(
-                Match.kickoff_at < end
-            )
-
-        if statuses:
-            statement = statement.where(
-                Match.status.in_(statuses)
-            )
-
-        statement = statement.order_by(
-            Match.kickoff_at
+            .order_by(Match.kickoff_at)
         )
 
         return list(
-            self.db.execute(statement).all()
+            self.db.scalars(statement).all()
+        )
+
+    def get_matches_by_date(
+        self,
+        start: datetime,
+        end: datetime,
+    ) -> list[Match]:
+        statement = (
+            select(Match)
+            .where(
+                Match.kickoff_at >= start,
+                Match.kickoff_at < end,
+            )
+            .order_by(Match.kickoff_at)
+        )
+
+        return list(
+            self.db.scalars(statement).all()
+        )
+
+    def get_upcoming_matches(
+        self,
+        now: datetime,
+        limit: int = 20,
+    ) -> list[Match]:
+        statement = (
+            select(Match)
+            .where(
+                Match.kickoff_at > now,
+                ~Match.status.in_(FINISHED_STATUSES),
+            )
+            .order_by(Match.kickoff_at)
+            .limit(limit)
+        )
+
+        return list(
+            self.db.scalars(statement).all()
+        )
+
+    def get_finished_matches(
+        self,
+        limit: int = 20,
+    ) -> list[Match]:
+        statement = (
+            select(Match)
+            .where(
+                Match.status.in_(FINISHED_STATUSES)
+            )
+            .order_by(Match.kickoff_at.desc())
+            .limit(limit)
+        )
+
+        return list(
+            self.db.scalars(statement).all()
         )

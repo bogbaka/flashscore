@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
-from app.models.match_event import MatchEvent
+from app.schemas.match import MatchListResponse
 from app.schemas.match_details import MatchDetailsResponse
 from app.schemas.match_event import MatchEventResponse
 from app.services.match import MatchService
@@ -16,46 +16,83 @@ router = APIRouter(
 )
 
 
-@router.get("/")
+@router.get(
+    "/",
+    response_model=MatchListResponse,
+)
 def get_matches(
     status: str | None = Query(default=None),
     date: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
-    limit: int = Query(default=20, ge=1, le=100),
+    limit: int = Query(
+        default=20,
+        ge=1,
+        le=100,
+    ),
     db: Session = Depends(get_db),
 ):
     service = MatchService(db)
 
     if status:
         matches, total = service.get_matches_by_status(
-            status,
-            page,
-            limit,
+            status=status,
+            page=page,
+            limit=limit,
         )
 
     elif date:
-        start = datetime.fromisoformat(date)
+        try:
+            start = datetime.fromisoformat(date)
+        except ValueError as error:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid date format",
+            ) from error
+
         end = start + timedelta(days=1)
 
         matches, total = service.get_matches_by_date(
-            start,
-            end,
-            page,
-            limit,
+            start=start,
+            end=end,
+            page=page,
+            limit=limit,
         )
 
     else:
         matches, total = service.get_all_matches(
-            page,
-            limit,
+            page=page,
+            limit=limit,
         )
 
-    return {
-        "page": page,
-        "limit": limit,
-        "total": total,
-        "matches": matches,
-    }
+    return MatchListResponse(
+        page=page,
+        limit=limit,
+        total=total,
+        matches=matches,
+    )
+
+
+@router.get(
+    "/{match_id}",
+    response_model=MatchDetailsResponse,
+)
+def get_match(
+    match_id: int,
+    db: Session = Depends(get_db),
+):
+    service = MatchService(db)
+
+    match = service.get_match_details(
+        match_id
+    )
+
+    if match is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Match not found",
+        )
+
+    return match
 
 
 @router.get(
@@ -76,34 +113,4 @@ def get_match_events(
             detail="Match not found",
         )
 
-    events = (
-        db.query(MatchEvent)
-        .filter(
-            MatchEvent.match_id == match.id
-        )
-        .order_by(MatchEvent.minute)
-        .all()
-    )
-
-    return events
-
-
-@router.get(
-    "/{match_id}",
-    response_model=MatchDetailsResponse,
-)
-def get_match(
-    match_id: int,
-    db: Session = Depends(get_db),
-):
-    service = MatchService(db)
-
-    match = service.get_match_details(match_id)
-
-    if match is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Match not found",
-        )
-
-    return match
+    return match.events

@@ -7,6 +7,10 @@ class Settings(BaseSettings):
     debug: bool = True
 
     football_api_key: str
+    football_api_base_url: str = (
+        "https://v3.football.api-sports.io"
+    )
+    football_api_timeout: float = 10.0
 
     jwt_secret_key: str
     jwt_algorithm: str = "HS256"
@@ -19,6 +23,7 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
 
 SUPPORTED_COMPETITIONS = {
     "premier-league": {

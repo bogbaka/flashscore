@@ -24,16 +24,25 @@ class MatchRepository:
             .limit(limit)
         )
 
-        matches = list(self.db.scalars(statement).all())
+        matches = list(
+            self.db.scalars(statement).all()
+        )
 
         total = self.db.scalar(
-            select(func.count()).select_from(Match)
+            select(func.count())
+            .select_from(Match)
         ) or 0
 
         return matches, total
 
-    def get_by_id(self, match_id: int) -> Match | None:
-        statement = select(Match).where(Match.id == match_id)
+    def get_by_id(
+        self,
+        match_id: int,
+    ) -> Match | None:
+        statement = select(Match).where(
+            Match.id == match_id
+        )
+
         return self.db.scalar(statement)
 
     def get_by_status(
@@ -44,17 +53,16 @@ class MatchRepository:
     ) -> tuple[list[Match], int]:
         offset = (page - 1) * limit
 
-        base_query = select(Match).where(
-            Match.status == status
+        statement = (
+            select(Match)
+            .where(Match.status == status)
+            .order_by(Match.kickoff_at)
+            .offset(offset)
+            .limit(limit)
         )
 
         matches = list(
-            self.db.scalars(
-                base_query
-                .order_by(Match.kickoff_at)
-                .offset(offset)
-                .limit(limit)
-            ).all()
+            self.db.scalars(statement).all()
         )
 
         total = self.db.scalar(
@@ -74,18 +82,19 @@ class MatchRepository:
     ) -> tuple[list[Match], int]:
         offset = (page - 1) * limit
 
-        base_query = select(Match).where(
-            Match.kickoff_at >= start,
-            Match.kickoff_at < end,
+        statement = (
+            select(Match)
+            .where(
+                Match.kickoff_at >= start,
+                Match.kickoff_at < end,
+            )
+            .order_by(Match.kickoff_at)
+            .offset(offset)
+            .limit(limit)
         )
 
         matches = list(
-            self.db.scalars(
-                base_query
-                .order_by(Match.kickoff_at)
-                .offset(offset)
-                .limit(limit)
-            ).all()
+            self.db.scalars(statement).all()
         )
 
         total = self.db.scalar(

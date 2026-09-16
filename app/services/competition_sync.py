@@ -63,9 +63,6 @@ class CompetitionSyncService:
             competition.country = country.get("name")
             competition.logo_url = league.get("logo")
 
-        self.db.commit()
-        self.db.refresh(competition)
-
         return competition
 
     def sync_all(

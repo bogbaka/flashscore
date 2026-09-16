@@ -14,8 +14,26 @@ class StandingRepository:
     ) -> list[Standing]:
         statement = (
             select(Standing)
-            .where(Standing.competition_id == competition_id)
+            .where(
+                Standing.competition_id == competition_id
+            )
             .order_by(Standing.position)
         )
 
-        return list(self.db.scalars(statement).all())
+        return list(
+            self.db.scalars(statement).all()
+        )
+
+    def get_by_team(
+        self,
+        team_id: int,
+    ) -> Standing | None:
+        statement = (
+            select(Standing)
+            .where(
+                Standing.team_id == team_id
+            )
+            .order_by(Standing.position)
+        )
+
+        return self.db.scalar(statement)

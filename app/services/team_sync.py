@@ -30,7 +30,9 @@ class TeamSyncService:
 
             team = (
                 self.db.query(Team)
-                .filter(Team.provider_id == provider_id)
+                .filter(
+                    Team.provider_id == provider_id
+                )
                 .first()
             )
 
@@ -42,16 +44,12 @@ class TeamSyncService:
                     logo_url=team_data["logo"],
                 )
                 self.db.add(team)
+
             else:
                 team.name = team_data["name"]
                 team.short_name = team_data["code"]
                 team.logo_url = team_data["logo"]
 
             teams.append(team)
-
-        self.db.commit()
-
-        for team in teams:
-            self.db.refresh(team)
 
         return teams

@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Session
 
+from app.models.competition import Competition
+from app.models.match import Match
 from app.repositories.competition import CompetitionRepository
 
 
@@ -7,32 +9,32 @@ class CompetitionService:
     def __init__(self, db: Session):
         self.repository = CompetitionRepository(db)
 
-    def get_all_competitions(self):
-        return self.repository.get_all()
+    def get_all_competitions(
+        self,
+        page: int = 1,
+        limit: int = 20,
+    ) -> tuple[list[Competition], int]:
+        return self.repository.get_all(
+            page=page,
+            limit=limit,
+        )
 
-    def get_competition(self, competition_id: int):
-        return self.repository.get_by_id(competition_id)
-
-    def get_competition_details(
+    def get_competition(
         self,
         competition_id: int,
-    ):
-        competition = self.repository.get_by_id(
+    ) -> Competition | None:
+        return self.repository.get_by_id(
             competition_id
         )
 
-        if competition is None:
-            return None
-
-        return {
-            "id": competition.id,
-            "name": competition.name,
-            "country": competition.country,
-            "logo_url": competition.logo_url,
-            "matches": self.repository.get_matches(
-                competition_id
-            ),
-            "standings": self.repository.get_standings(
-                competition_id
-            ),
-        }
+    def get_competition_matches(
+        self,
+        competition_id: int,
+        page: int = 1,
+        limit: int = 20,
+    ) -> tuple[list[Match], int]:
+        return self.repository.get_matches(
+            competition_id=competition_id,
+            page=page,
+            limit=limit,
+        )

@@ -21,8 +21,16 @@ def search(
         min_length=1,
         max_length=100,
     ),
+    limit: int = Query(
+        default=10,
+        ge=1,
+        le=50,
+    ),
     db: Session = Depends(get_db),
 ):
     service = SearchService(db)
 
-    return service.search(q)
+    return service.search(
+        query=q.strip(),
+        limit=limit,
+    )

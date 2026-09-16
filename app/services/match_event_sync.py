@@ -11,15 +11,22 @@ class MatchEventSyncService:
         self.db = db
         self.client = FootballAPIClient()
 
-    def sync_events(self, fixture_id: int) -> list[MatchEvent]:
+    def sync_events(
+        self,
+        fixture_id: int,
+    ) -> list[MatchEvent]:
         match = (
             self.db.query(Match)
-            .filter(Match.provider_id == fixture_id)
+            .filter(
+                Match.provider_id == fixture_id
+            )
             .first()
         )
 
         if match is None:
-            raise ValueError("Match must be synced before events.")
+            raise ValueError(
+                "Match must be synced before events."
+            )
 
         data = self.client.get(
             "fixtures/events",
@@ -30,15 +37,18 @@ class MatchEventSyncService:
             MatchEvent.match_id == match.id
         ).delete()
 
+        teams = self.db.query(Team).all()
+
+        teams_by_provider_id = {
+            team.provider_id: team
+            for team in teams
+        }
+
         events = []
 
         for item in data["response"]:
-            team = (
-                self.db.query(Team)
-                .filter(
-                    Team.provider_id == item["team"]["id"]
-                )
-                .first()
+            team = teams_by_provider_id.get(
+                item["team"]["id"]
             )
 
             event = MatchEvent(

@@ -1,26 +1,28 @@
 from sqlalchemy.orm import Session
 
-from app.repositories.competition import CompetitionRepository
-from app.repositories.team import TeamRepository
+from app.models.competition import Competition
+from app.models.team import Team
+from app.repositories.search import SearchRepository
 
 
 class SearchService:
     def __init__(self, db: Session):
-        self.team_repository = TeamRepository(db)
-        self.competition_repository = CompetitionRepository(db)
+        self.repository = SearchRepository(db)
 
-    def search(self, query: str):
-        query = query.strip()
-
-        if not query:
-            return {
-                "teams": [],
-                "competitions": [],
-            }
-
+    def search(
+        self,
+        query: str,
+        limit: int = 10,
+    ) -> dict[str, list[Team | Competition]]:
         return {
-            "teams": self.team_repository.search(query),
-            "competitions": self.competition_repository.search(
-                query
+            "teams": self.repository.search_teams(
+                query=query,
+                limit=limit,
+            ),
+            "competitions": (
+                self.repository.search_competitions(
+                    query=query,
+                    limit=limit,
+                )
             ),
         }
