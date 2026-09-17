@@ -30,9 +30,7 @@ class TeamSyncService:
 
             team = (
                 self.db.query(Team)
-                .filter(
-                    Team.provider_id == provider_id
-                )
+                .filter(Team.provider_id == provider_id)
                 .first()
             )
 
@@ -40,16 +38,18 @@ class TeamSyncService:
                 team = Team(
                     provider_id=provider_id,
                     name=team_data["name"],
-                    short_name=team_data["code"],
-                    logo_url=team_data["logo"],
+                    short_name=team_data.get("code"),
+                    logo_url=team_data.get("logo"),
                 )
                 self.db.add(team)
-
             else:
                 team.name = team_data["name"]
-                team.short_name = team_data["code"]
-                team.logo_url = team_data["logo"]
+                team.short_name = team_data.get("code")
+                team.logo_url = team_data.get("logo")
 
             teams.append(team)
+
+        # Make newly-created teams visible to the next sync step.
+        self.db.flush()
 
         return teams

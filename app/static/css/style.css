@@ -15,3 +15,402 @@
     min-width: 70px;
     text-align: center;
 }
+.match-card {
+    padding: 18px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.match-card:last-child {
+    border-bottom: 0;
+}
+
+.match-competition {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    color: #666;
+    font-size: 13px;
+}
+
+.competition-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.competition-logo {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.match-teams {
+    display: grid;
+    grid-template-columns: 1fr 90px 1fr;
+    align-items: center;
+    gap: 16px;
+}
+
+.team {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.team:last-child {
+    justify-content: flex-end;
+    text-align: right;
+}
+
+.team-logo {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.team-name {
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.match-score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    text-align: center;
+}
+
+.match-score strong {
+    font-size: 20px;
+    white-space: nowrap;
+}
+
+.match-status {
+    font-size: 12px;
+    font-weight: 700;
+    color: #777;
+}
+
+.match-status.live {
+    color: #d62828;
+}
+
+
+@media (max-width: 600px) {
+    .match-card {
+        padding: 16px;
+    }
+
+    .match-teams {
+        grid-template-columns: 1fr 65px 1fr;
+        gap: 8px;
+    }
+
+    .team {
+        gap: 8px;
+    }
+
+    .team-logo {
+        width: 30px;
+        height: 30px;
+    }
+
+    .team-name {
+        font-size: 14px;
+    }
+
+    .match-score strong {
+        font-size: 18px;
+    }
+
+    .match-status {
+        font-size: 11px;
+    }
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 24px;
+    color: #555;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.back-link:hover {
+    color: #111;
+}
+
+.match-details {
+    margin: 40px 0 24px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.details-competition {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 32px;
+    color: #666;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.details-competition img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.details-score {
+    display: grid;
+    grid-template-columns: 1fr 120px 1fr;
+    align-items: center;
+    gap: 24px;
+}
+
+.details-team {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+}
+
+.details-team:last-child {
+    grid-column: 3;
+}
+
+.details-team-logo {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+}
+
+.details-team h2 {
+    font-size: 20px;
+}
+
+.details-result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.details-result strong {
+    font-size: 32px;
+}
+
+.events-section {
+    margin-bottom: 40px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.events-list {
+    padding: 8px 20px;
+}
+
+.match-event {
+    display: grid;
+    grid-template-columns: 50px 35px 1fr;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.match-event:last-child {
+    border-bottom: 0;
+}
+
+.event-minute {
+    font-weight: 700;
+    color: #777;
+}
+
+.event-icon {
+    font-size: 18px;
+}
+
+.event-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.event-info strong {
+    font-size: 14px;
+}
+
+.event-info span {
+    color: #777;
+    font-size: 13px;
+}
+
+
+@media (max-width: 600px) {
+    .match-details {
+        margin-top: 24px;
+        padding: 18px;
+    }
+
+    .details-score {
+        grid-template-columns: 1fr 80px 1fr;
+        gap: 8px;
+    }
+
+    .details-team-logo {
+        width: 52px;
+        height: 52px;
+    }
+
+    .details-team h2 {
+        font-size: 15px;
+    }
+
+    .details-result strong {
+        font-size: 26px;
+    }
+}
+.match-card {
+    cursor: pointer;
+}
+
+.match-card:hover {
+    background: #fafafa;
+}
+
+.details-date {
+    text-align: center;
+    margin-bottom: 28px;
+    color: #666;
+    font-size: 14px;
+}
+
+.team-short-name {
+    color: #888;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.page-header {
+    padding: 32px 0 24px;
+}
+
+.page-header h1 {
+    font-size: 30px;
+    margin-bottom: 6px;
+}
+
+.page-header p {
+    color: #666;
+}
+
+.standings-section {
+    margin-bottom: 40px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.standings-container {
+    min-height: 200px;
+}
+
+.standings-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.standings-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px;
+}
+
+.standings-table th {
+    padding: 14px 12px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e5e7eb;
+    color: #666;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.standings-table th:nth-child(2) {
+    text-align: left;
+}
+
+.standings-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    text-align: center;
+}
+
+.standings-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.standings-table tbody tr:hover {
+    background: #fafafa;
+}
+
+.standings-table .position {
+    width: 55px;
+    font-weight: 700;
+    color: #666;
+}
+
+.standing-team {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.standing-team-logo {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.standings-table .points {
+    font-weight: 800;
+}
+
+@media (max-width: 600px) {
+    .page-header {
+        padding-top: 24px;
+    }
+
+    .page-header h1 {
+        font-size: 26px;
+    }
+
+    .standings-table th,
+    .standings-table td {
+        padding: 12px 8px;
+    }
+
+    .standing-team-logo {
+        width: 26px;
+        height: 26px;
+    }
+}

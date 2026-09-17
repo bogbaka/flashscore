@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>{{ title }}</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', path='css/style.css') }}"
+    >
+</head>
+
+<body>
+    <header class="topbar">
+        <div class="container topbar-content">
+            <a href="/" class="logo">
+                ⚽ LiveScore
+            </a>
+
+            <nav class="nav">
+                <a href="/">Matches</a>
+                <a href="/api/v1/competitions">Competitions</a>
+                <a href="/api/v1/standings">Standings</a>
+            </nav>
+
+            <button class="search-button">
+                🔍
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="match-container">
+            <div class="loading">
+                Loading match...
+            </div>
+        </div>
+    </main>
+
+    <script
+        src="{{ url_for('static', path='js/match.js') }}"
+    ></script>
+</body>
+</html>

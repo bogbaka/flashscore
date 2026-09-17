@@ -12,7 +12,10 @@ from app.api.v1.standings import router as standings_router
 from app.api.v1.teams import router as teams_router
 
 
-app = FastAPI(title="Football LiveScore API")
+app = FastAPI(
+    title="Football LiveScore API"
+)
+
 
 app.mount(
     "/static",
@@ -20,7 +23,10 @@ app.mount(
     name="static",
 )
 
-templates = Jinja2Templates(directory="app/templates")
+
+templates = Jinja2Templates(
+    directory="app/templates"
+)
 
 
 app.include_router(
@@ -75,6 +81,33 @@ def root(request: Request):
     )
 
 
+@app.get("/standings")
+def standings_page(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="standings.html",
+        context={
+            "title": "Standings",
+        },
+    )
+
+
+@app.get("/matches/{match_id}")
+def match_page(
+    request: Request,
+    match_id: int,
+):
+    return templates.TemplateResponse(
+        request=request,
+        name="match.html",
+        context={
+            "title": "Match Details",
+        },
+    )
+
+
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    return {
+        "status": "healthy"
+    }

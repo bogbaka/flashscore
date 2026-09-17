@@ -46,9 +46,13 @@ class MatchSyncService:
         teams_by_provider_id = {
             team.provider_id: team
             for team in teams
+            if team.provider_id is not None
         }
 
-        fixtures = data["response"]
+        fixtures = data.get("response", [])
+
+        if not fixtures:
+            return []
 
         provider_ids = [
             item["fixture"]["id"]
@@ -67,30 +71,40 @@ class MatchSyncService:
         }
 
         matches = []
+        skipped_fixtures = []
 
         for item in fixtures:
             fixture = item["fixture"]
             fixture_teams = item["teams"]
             goals = item["goals"]
 
-            home_team = teams_by_provider_id.get(
-                fixture_teams["home"]["id"]
-            )
+            home_provider_id = fixture_teams["home"]["id"]
+            away_provider_id = fixture_teams["away"]["id"]
 
-            away_team = teams_by_provider_id.get(
-                fixture_teams["away"]["id"]
-            )
+            home_team = teams_by_provider_id.get(home_provider_id)
+            away_team = teams_by_provider_id.get(away_provider_id)
 
             if home_team is None or away_team is None:
+                skipped_fixtures.append(
+                    {
+                        "fixture_id": fixture["id"],
+                        "home_team_id": home_provider_id,
+                        "away_team_id": away_provider_id,
+                    }
+                )
                 continue
+
+            kickoff_at = datetime.fromisoformat(
+                fixture["date"].replace("Z", "+00:00")
+            )
 
             match = matches_by_provider_id.get(
                 fixture["id"]
             )
 
-            kickoff_at = datetime.fromisoformat(
-                fixture["date"]
-            )
+            home_score = goals.get("home") or 0
+            away_score = goals.get("away") or 0
+            status = fixture["status"]["short"]
 
             if match is None:
                 match = Match(
@@ -100,23 +114,29 @@ class MatchSyncService:
                     home_team_id=home_team.id,
                     away_team_id=away_team.id,
                     kickoff_at=kickoff_at,
-                    status=fixture["status"]["short"],
-                    home_score=goals["home"] or 0,
-                    away_score=goals["away"] or 0,
+                    status=status,
+                    home_score=home_score,
+                    away_score=away_score,
                 )
-
                 self.db.add(match)
-
             else:
                 match.competition_id = competition.id
                 match.season_id = season_id
                 match.home_team_id = home_team.id
                 match.away_team_id = away_team.id
                 match.kickoff_at = kickoff_at
-                match.status = fixture["status"]["short"]
-                match.home_score = goals["home"] or 0
-                match.away_score = goals["away"] or 0
+                match.status = status
+                match.home_score = home_score
+                match.away_score = away_score
 
             matches.append(match)
+
+        if skipped_fixtures:
+            print(
+                f"Warning: skipped {len(skipped_fixtures)} "
+                "fixtures because their teams were not found."
+            )
+
+        self.db.flush()
 
         return matches

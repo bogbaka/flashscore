@@ -1,9 +1,18 @@
 from datetime import datetime
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.match import Match
+
+
+LIVE_STATUSES = (
+    "1H",
+    "HT",
+    "2H",
+    "ET",
+    "P",
+)
 
 
 class MatchRepository:
@@ -12,98 +21,139 @@ class MatchRepository:
 
     def get_all(
         self,
-        page: int = 1,
-        limit: int = 20,
+        page: int,
+        limit: int,
     ) -> tuple[list[Match], int]:
-        offset = (page - 1) * limit
-
-        statement = (
+        query = (
             select(Match)
+            .options(
+                joinedload(Match.competition),
+                joinedload(Match.home_team),
+                joinedload(Match.away_team),
+            )
             .order_by(Match.kickoff_at)
-            .offset(offset)
-            .limit(limit)
         )
 
-        matches = list(
-            self.db.scalars(statement).all()
+        return self._paginate(
+            query,
+            page,
+            limit,
         )
-
-        total = self.db.scalar(
-            select(func.count())
-            .select_from(Match)
-        ) or 0
-
-        return matches, total
-
-    def get_by_id(
-        self,
-        match_id: int,
-    ) -> Match | None:
-        statement = select(Match).where(
-            Match.id == match_id
-        )
-
-        return self.db.scalar(statement)
 
     def get_by_status(
         self,
         status: str,
-        page: int = 1,
-        limit: int = 20,
+        page: int,
+        limit: int,
     ) -> tuple[list[Match], int]:
-        offset = (page - 1) * limit
-
-        statement = (
+        query = (
             select(Match)
-            .where(Match.status == status)
+            .where(
+                Match.status == status
+            )
+            .options(
+                joinedload(Match.competition),
+                joinedload(Match.home_team),
+                joinedload(Match.away_team),
+            )
             .order_by(Match.kickoff_at)
-            .offset(offset)
-            .limit(limit)
         )
 
-        matches = list(
-            self.db.scalars(statement).all()
+        return self._paginate(
+            query,
+            page,
+            limit,
         )
 
-        total = self.db.scalar(
-            select(func.count())
-            .select_from(Match)
-            .where(Match.status == status)
-        ) or 0
+    def get_live(
+        self,
+        page: int,
+        limit: int,
+    ) -> tuple[list[Match], int]:
+        query = (
+            select(Match)
+            .where(
+                Match.status.in_(LIVE_STATUSES)
+            )
+            .options(
+                joinedload(Match.competition),
+                joinedload(Match.home_team),
+                joinedload(Match.away_team),
+            )
+            .order_by(Match.kickoff_at)
+        )
 
-        return matches, total
+        return self._paginate(
+            query,
+            page,
+            limit,
+        )
 
     def get_by_date(
         self,
         start: datetime,
         end: datetime,
-        page: int = 1,
-        limit: int = 20,
+        page: int,
+        limit: int,
     ) -> tuple[list[Match], int]:
-        offset = (page - 1) * limit
-
-        statement = (
+        query = (
             select(Match)
             .where(
                 Match.kickoff_at >= start,
                 Match.kickoff_at < end,
             )
+            .options(
+                joinedload(Match.competition),
+                joinedload(Match.home_team),
+                joinedload(Match.away_team),
+            )
             .order_by(Match.kickoff_at)
-            .offset(offset)
-            .limit(limit)
         )
 
-        matches = list(
-            self.db.scalars(statement).all()
+        return self._paginate(
+            query,
+            page,
+            limit,
+        )
+
+    def get_by_id(
+        self,
+        match_id: int,
+    ) -> Match | None:
+        query = (
+            select(Match)
+            .where(
+                Match.id == match_id
+            )
+            .options(
+                joinedload(Match.competition),
+                joinedload(Match.home_team),
+                joinedload(Match.away_team),
+            )
+        )
+
+        return self.db.scalar(query)
+
+    def _paginate(
+        self,
+        query,
+        page: int,
+        limit: int,
+    ) -> tuple[list[Match], int]:
+        count_query = select(
+            func.count()
+        ).select_from(
+            query.subquery()
         )
 
         total = self.db.scalar(
-            select(func.count())
-            .select_from(Match)
-            .where(
-                Match.kickoff_at >= start,
-                Match.kickoff_at < end,
-            )
+            count_query
         ) or 0
+
+        offset = (page - 1) * limit
+
+        matches = self.db.scalars(
+            query.offset(offset).limit(limit)
+        ).all()
 
         return matches, total

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>{{ title }}</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', path='css/style.css') }}"
+    >
+</head>
+
+<body>
+    <header class="topbar">
+        <div class="container topbar-content">
+            <a href="/" class="logo">
+                ⚽ LiveScore
+            </a>
+
+            <nav class="nav">
+                <a href="/">Matches</a>
+                <a href="/standings">Standings</a>
+                <a href="/api/v1/competitions">
+                    Competitions
+                </a>
+            </nav>
+
+            <button class="search-button">
+                🔍
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="page-header">
+            <a
+                href="/"
+                class="back-link"
+            >
+                ← Back to matches
+            </a>
+
+            <h1>Standings</h1>
+
+            <p>
+                Premier League table
+            </p>
+        </section>
+
+        <section class="standings-section">
+            <div
+                id="standings-container"
+                class="standings-container"
+            >
+                <div class="loading">
+                    Loading standings...
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script
+        src="{{ url_for('static', path='js/standings.js') }}"
+    ></script>
+</body>
+</html>

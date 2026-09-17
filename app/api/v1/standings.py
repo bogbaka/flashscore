@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
@@ -10,6 +10,29 @@ router = APIRouter(
     prefix="/standings",
     tags=["Standings"],
 )
+
+
+@router.get(
+    "/",
+    response_model=list[StandingResponse],
+)
+def get_standings(
+    competition_id: int = Query(default=1, ge=1),
+    db: Session = Depends(get_db),
+):
+    service = StandingService(db)
+
+    standings = service.get_competition_standings(
+        competition_id
+    )
+
+    if not standings:
+        raise HTTPException(
+            status_code=404,
+            detail="Standings not found",
+        )
+
+    return standings
 
 
 @router.get(

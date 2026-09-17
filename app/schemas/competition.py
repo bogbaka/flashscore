@@ -10,3 +10,10 @@ class CompetitionResponse(BaseModel):
     model_config = {
         "from_attributes": True,
     }
+
+
+class CompetitionListResponse(BaseModel):
+    page: int
+    limit: int
+    total: int
+    competitions: list[CompetitionResponse]

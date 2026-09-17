@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.standing import Standing
 
@@ -17,6 +17,11 @@ class StandingRepository:
             .where(
                 Standing.competition_id == competition_id
             )
+            .options(
+                joinedload(Standing.team),
+                joinedload(Standing.competition),
+                joinedload(Standing.season),
+            )
             .order_by(Standing.position)
         )
 
@@ -32,6 +37,11 @@ class StandingRepository:
             select(Standing)
             .where(
                 Standing.team_id == team_id
+            )
+            .options(
+                joinedload(Standing.team),
+                joinedload(Standing.competition),
+                joinedload(Standing.season),
             )
             .order_by(Standing.position)
         )
