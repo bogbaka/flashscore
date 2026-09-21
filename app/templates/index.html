@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
@@ -16,54 +17,247 @@
 </head>
 
 <body>
-    <header class="topbar">
-        <div class="container topbar-content">
-            <a href="/" class="logo">
-                ⚽ LiveScore
+
+<header class="topbar">
+
+    <div class="container topbar-content">
+
+        <a href="/" class="logo">
+            <span class="logo-ball">⚽</span>
+            <span>LiveScore</span>
+        </a>
+
+        <nav class="nav">
+
+            <a
+                href="/"
+                class="active"
+            >
+                Matches
             </a>
 
-            <nav class="nav">
-                <a href="/">Matches</a>
-                <a href="/api/v1/competitions">Competitions</a>
-                <a href="/api/v1/standings">Standings</a>
-            </nav>
+            <a href="/api/v1/competitions">
+                Competitions
+            </a>
 
-            <button class="search-button">
-                🔍
-            </button>
-        </div>
-    </header>
+            <a href="/api/v1/standings">
+                Standings
+            </a>
 
-    <main class="container">
-        <section class="hero">
-            <h1>Football LiveScore</h1>
-            <p>
-                Live scores, fixtures, results and standings.
-            </p>
-        </section>
+        </nav>
 
-        <section class="tabs">
-            <button class="tab active">LIVE</button>
-            <button class="tab">TODAY</button>
-            <button class="tab">UPCOMING</button>
-            <button class="tab">FINISHED</button>
-        </section>
+        <button
+            class="search-button"
+            type="button"
+            aria-label="Search"
+        >
+            🔍
+        </button>
 
-        <section class="matches">
-            <div class="section-heading">
-                <h2>Today's Matches</h2>
-            </div>
+    </div>
 
-            <div id="matches-container">
-                <div class="loading">
-                    Loading matches...
+</header>
+
+
+<main>
+
+    <section class="hero">
+
+        <div class="container">
+
+            <div class="hero-content">
+
+                <div>
+
+                    <span class="eyebrow">
+                        FOOTBALL LIVE
+                    </span>
+
+                    <h1>
+                        Live scores.
+                        <span>Every match.</span>
+                    </h1>
+
+                    <p>
+                        Follow live football scores,
+                        fixtures and results in one place.
+                    </p>
+
                 </div>
-            </div>
-        </section>
-    </main>
 
-    <script
-        src="{{ url_for('static', path='js/app.js') }}"
-    ></script>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section class="feed-navigation">
+
+        <div class="container">
+
+            <div
+                id="date-navigation"
+                class="date-navigation"
+            >
+
+                <button
+                    id="previous-date"
+                    class="date-button"
+                    type="button"
+                    aria-label="Previous day"
+                >
+                    ‹
+                    <span>Previous</span>
+                </button>
+
+
+                <div class="selected-date">
+
+                    <span
+                        class="calendar-icon"
+                        aria-hidden="true"
+                    >
+                        📅
+                    </span>
+
+                    <strong id="selected-date">
+                        TODAY
+                    </strong>
+
+                </div>
+
+
+                <button
+                    id="next-date"
+                    class="date-button"
+                    type="button"
+                    aria-label="Next day"
+                >
+                    <span>Next</span>
+                    ›
+                </button>
+
+            </div>
+
+
+            <div class="tabs">
+
+                <button
+                    class="tab"
+                    data-feed="live"
+                    type="button"
+                >
+                    <span class="live-dot"></span>
+                    LIVE
+                </button>
+
+                <button
+                    class="tab active"
+                    data-feed="today"
+                    type="button"
+                >
+                    TODAY
+                </button>
+
+                <button
+                    class="tab"
+                    data-feed="upcoming"
+                    type="button"
+                >
+                    UPCOMING
+                </button>
+
+                <button
+                    class="tab"
+                    data-feed="finished"
+                    type="button"
+                >
+                    FINISHED
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section class="matches-section">
+
+        <div class="container">
+
+            <div class="section-header">
+
+                <div>
+
+                    <span
+                        class="section-label"
+                        id="section-label"
+                    >
+                        TODAY
+                    </span>
+
+                    <h2 id="section-title">
+                        Today's Matches
+                    </h2>
+
+                </div>
+
+
+                <button
+                    id="refresh-button"
+                    class="refresh-button"
+                    type="button"
+                >
+                    ↻ Refresh
+                </button>
+
+            </div>
+
+
+            <div
+                id="matches-container"
+                class="matches-container"
+            >
+
+                <div class="loading">
+
+                    <div class="spinner"></div>
+
+                    <span>
+                        Loading matches...
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<footer class="footer">
+
+    <div class="container">
+
+        <p>
+            Football LiveScore
+            <span>•</span>
+            Live football data
+        </p>
+
+    </div>
+
+</footer>
+
+
+<script
+    src="{{ url_for('static', path='js/app.js') }}"
+></script>
+
 </body>
 </html>

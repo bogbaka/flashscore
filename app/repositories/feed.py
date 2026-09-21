@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.match import Match
 
@@ -27,13 +27,23 @@ class FeedRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    def _base_query(self):
+        return (
+            select(Match)
+            .options(
+                joinedload(Match.competition),
+                joinedload(Match.home_team),
+                joinedload(Match.away_team),
+            )
+        )
+
     def get_live_matches(
         self,
         start: datetime,
         end: datetime,
     ) -> list[Match]:
         statement = (
-            select(Match)
+            self._base_query()
             .where(
                 Match.status.in_(LIVE_STATUSES),
                 Match.kickoff_at >= start,
@@ -43,7 +53,7 @@ class FeedRepository:
         )
 
         return list(
-            self.db.scalars(statement).all()
+            self.db.scalars(statement).unique().all()
         )
 
     def get_matches_by_date(
@@ -52,7 +62,7 @@ class FeedRepository:
         end: datetime,
     ) -> list[Match]:
         statement = (
-            select(Match)
+            self._base_query()
             .where(
                 Match.kickoff_at >= start,
                 Match.kickoff_at < end,
@@ -61,7 +71,7 @@ class FeedRepository:
         )
 
         return list(
-            self.db.scalars(statement).all()
+            self.db.scalars(statement).unique().all()
         )
 
     def get_upcoming_matches(
@@ -70,7 +80,7 @@ class FeedRepository:
         limit: int = 20,
     ) -> list[Match]:
         statement = (
-            select(Match)
+            self._base_query()
             .where(
                 Match.kickoff_at > now,
                 ~Match.status.in_(FINISHED_STATUSES),
@@ -80,7 +90,7 @@ class FeedRepository:
         )
 
         return list(
-            self.db.scalars(statement).all()
+            self.db.scalars(statement).unique().all()
         )
 
     def get_finished_matches(
@@ -88,7 +98,7 @@ class FeedRepository:
         limit: int = 20,
     ) -> list[Match]:
         statement = (
-            select(Match)
+            self._base_query()
             .where(
                 Match.status.in_(FINISHED_STATUSES)
             )
@@ -97,5 +107,5 @@ class FeedRepository:
         )
 
         return list(
-            self.db.scalars(statement).all()
+            self.db.scalars(statement).unique().all()
         )

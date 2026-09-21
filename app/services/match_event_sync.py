@@ -1,3 +1,4 @@
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.integrations.football_api.client import FootballAPIClient
@@ -15,12 +16,10 @@ class MatchEventSyncService:
         self,
         fixture_id: int,
     ) -> list[MatchEvent]:
-        match = (
-            self.db.query(Match)
-            .filter(
+        match = self.db.scalar(
+            select(Match).where(
                 Match.provider_id == fixture_id
             )
-            .first()
         )
 
         if match is None:
@@ -37,27 +36,32 @@ class MatchEventSyncService:
             MatchEvent.match_id == match.id
         ).delete()
 
-        teams = self.db.query(Team).all()
+        teams = self.db.scalars(
+            select(Team)
+        ).all()
 
         teams_by_provider_id = {
             team.provider_id: team
             for team in teams
+            if team.provider_id is not None
         }
 
         events = []
 
-        for item in data["response"]:
+        for item in data.get("response", []):
             team = teams_by_provider_id.get(
                 item["team"]["id"]
             )
 
+            player = item.get("player")
+
             event = MatchEvent(
                 match_id=match.id,
-                minute=item["time"]["elapsed"],
-                event_type=item["type"],
+                minute=item["time"].get("elapsed"),
+                event_type=item.get("type", "Unknown"),
                 player_name=(
-                    item["player"]["name"]
-                    if item.get("player")
+                    player.get("name")
+                    if player
                     else None
                 ),
                 team_id=team.id if team else None,
@@ -67,9 +71,12 @@ class MatchEventSyncService:
             self.db.add(event)
             events.append(event)
 
-        self.db.commit()
+        self.db.flush()
 
         for event in events:
             self.db.refresh(event)
 
         return events
+
+    def close(self) -> None:
+        self.client.close()

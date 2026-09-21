@@ -15,8 +15,12 @@ class FeedService:
         start: datetime,
         end: datetime,
         limit: int = 20,
+        now: datetime | None = None,
     ) -> dict[str, list[Match]]:
-        now = datetime.now(timezone.utc)
+        current_time = (
+            now
+            or datetime.now(timezone.utc)
+        )
 
         today_matches = (
             self.repository.get_matches_by_date(
@@ -34,7 +38,7 @@ class FeedService:
 
         upcoming_matches = (
             self.repository.get_upcoming_matches(
-                now=now,
+                now=current_time,
                 limit=limit,
             )
         )

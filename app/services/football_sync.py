@@ -2,8 +2,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import SUPPORTED_COMPETITIONS
+from app.models.match import Match
 from app.models.season import Season
 from app.services.competition_sync import CompetitionSyncService
+from app.services.match_event_sync import MatchEventSyncService
 from app.services.match_sync import MatchSyncService
 from app.services.standing_sync import StandingSyncService
 from app.services.team_sync import TeamSyncService
@@ -16,6 +18,7 @@ class FootballSyncService:
         self.competition_sync = CompetitionSyncService(db)
         self.team_sync = TeamSyncService(db)
         self.match_sync = MatchSyncService(db)
+        self.match_event_sync = MatchEventSyncService(db)
         self.standing_sync = StandingSyncService(db)
 
     def get_or_create_season(
@@ -97,3 +100,34 @@ class FootballSyncService:
         except Exception:
             self.db.rollback()
             raise
+
+    def sync_match_events(
+        self,
+        fixture_id: int,
+    ) -> list:
+        match = self.db.scalar(
+            select(Match).where(
+                Match.provider_id == fixture_id
+            )
+        )
+
+        if match is None:
+            raise ValueError(
+                "Match must be synced before events."
+            )
+
+        try:
+            events = self.match_event_sync.sync_events(
+                fixture_id
+            )
+
+            self.db.commit()
+
+            return events
+
+        except Exception:
+            self.db.rollback()
+            raise
+
+    def close(self) -> None:
+        self.match_event_sync.close()

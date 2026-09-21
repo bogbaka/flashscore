@@ -1,4 +1,10 @@
 import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from app.config import SUPPORTED_COMPETITIONS
 from app.database.session import SessionLocal
@@ -48,7 +54,7 @@ def sync_competition(
         db.close()
 
 
-def main():
+def main() -> None:
     if len(sys.argv) != 3:
         print(
             "Usage: "
@@ -58,7 +64,12 @@ def main():
         return
 
     slug = sys.argv[1]
-    season = int(sys.argv[2])
+
+    try:
+        season = int(sys.argv[2])
+    except ValueError:
+        print("Season must be a number, e.g. 2026.")
+        return
 
     if slug == "all":
         for competition_slug in SUPPORTED_COMPETITIONS:
@@ -79,14 +90,10 @@ def main():
         print(
             f"Unsupported competition: {slug}"
         )
-        print(
-            "Available competitions:"
-        )
+        print("Available competitions:")
 
-        for competition in SUPPORTED_COMPETITIONS:
-            print(
-                f"  - {competition}"
-            )
+        for competition_slug in SUPPORTED_COMPETITIONS:
+            print(f"  - {competition_slug}")
 
         return
 

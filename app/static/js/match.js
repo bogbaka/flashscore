@@ -3,37 +3,77 @@ const container = document.getElementById(
 );
 
 
-function getMatchStatus(match) {
-    const liveStatuses = [
-        "1H",
-        "2H",
-        "ET",
-        "P",
-        "LIVE",
-    ];
+const LIVE_STATUSES = [
+    "1H",
+    "HT",
+    "2H",
+    "ET",
+    "BT",
+    "P",
+    "LIVE",
+];
 
-    if (liveStatuses.includes(match.status)) {
+
+function escapeHtml(value) {
+    if (
+        value === null ||
+        value === undefined
+    ) {
+        return "";
+    }
+
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+
+function isLive(match) {
+    return LIVE_STATUSES.includes(
+        match.status
+    );
+}
+
+
+function getMatchStatus(match) {
+    if (isLive(match)) {
         return "LIVE";
     }
 
-    if (match.status === "HT") {
-        return "HT";
-    }
-
-    if (match.status === "FT") {
+    if (
+        match.status === "FT" ||
+        match.status === "AET" ||
+        match.status === "PEN"
+    ) {
         return "FT";
     }
 
-    if (match.status === "NS") {
+    if (
+        match.status === "NS" ||
+        match.status === "TBD"
+    ) {
         return "Scheduled";
     }
 
-    return match.status;
+    return escapeHtml(
+        match.status || "Unknown"
+    );
 }
 
 
 function formatMatchDate(dateString) {
+    if (!dateString) {
+        return "Date unavailable";
+    }
+
     const date = new Date(dateString);
+
+    if (Number.isNaN(date.getTime())) {
+        return "Date unavailable";
+    }
 
     return date.toLocaleString(
         undefined,
@@ -50,36 +90,77 @@ function formatMatchDate(dateString) {
 
 
 function createTeam(team) {
+    const logo = team.logo_url
+        ? `
+            <img
+                src="${escapeHtml(team.logo_url)}"
+                alt="${escapeHtml(team.name)}"
+                class="details-team-logo"
+                loading="lazy"
+            >
+        `
+        : `
+            <div
+                class="details-team-logo"
+                aria-hidden="true"
+            >
+                ⚽
+            </div>
+        `;
+
     return `
         <div class="details-team">
-            <img
-                src="${team.logo_url}"
-                alt="${team.name}"
-                class="details-team-logo"
-            >
+
+            ${logo}
 
             <h2>
-                ${team.name}
+                ${escapeHtml(team.name)}
             </h2>
 
-            <span class="team-short-name">
-                ${team.short_name || ""}
-            </span>
+            ${
+                team.short_name
+                    ? `
+                        <span class="team-short-name">
+                            ${escapeHtml(
+                                team.short_name
+                            )}
+                        </span>
+                    `
+                    : ""
+            }
+
         </div>
     `;
 }
 
 
-function getEventIcon(eventType) {
-    if (eventType === "Goal") {
+function getEventIcon(event) {
+    const type =
+        String(
+            event.event_type || ""
+        ).toLowerCase();
+
+    if (type === "goal") {
         return "⚽";
     }
 
-    if (eventType === "Card") {
+    if (
+        type === "card" &&
+        String(
+            event.description || ""
+        ).toLowerCase().includes("red")
+    ) {
+        return "🟥";
+    }
+
+    if (type === "card") {
         return "🟨";
     }
 
-    if (eventType === "subst") {
+    if (
+        type === "subst" ||
+        type === "substitution"
+    ) {
         return "🔄";
     }
 
@@ -88,45 +169,97 @@ function getEventIcon(eventType) {
 
 
 function createEvent(event) {
+    const minute =
+        event.minute !== null &&
+        event.minute !== undefined
+            ? `${escapeHtml(event.minute)}'`
+            : "—";
+
+    const player =
+        event.player_name ||
+        "Match event";
+
+    const description =
+        event.description ||
+        event.event_type ||
+        "Event";
+
     return `
         <div class="match-event">
+
             <span class="event-minute">
-                ${event.minute ?? ""}'
+                ${minute}
             </span>
 
-            <span class="event-icon">
-                ${getEventIcon(event.event_type)}
+            <span
+                class="event-icon"
+                aria-hidden="true"
+            >
+                ${getEventIcon(event)}
             </span>
 
             <div class="event-info">
+
                 <strong>
-                    ${event.player_name || "Unknown"}
+                    ${escapeHtml(player)}
                 </strong>
 
                 <span>
-                    ${event.description || event.event_type}
+                    ${escapeHtml(description)}
                 </span>
+
             </div>
+
         </div>
     `;
 }
 
 
-function renderMatch(match) {
-    const status = getMatchStatus(match);
+function createEvents(events) {
+    if (
+        !events ||
+        events.length === 0
+    ) {
+        return `
+            <div class="empty-events">
 
-    const events = match.events.length
-        ? match.events
-            .map(createEvent)
-            .join("")
-        : `
-            <div class="loading">
-                No match events recorded.
+                <strong>
+                    No match events recorded.
+                </strong>
+
+                <span>
+                    Goals, cards and substitutions
+                    will appear here when available.
+                </span>
+
             </div>
         `;
+    }
+
+    return events
+        .map(createEvent)
+        .join("");
+}
+
+
+function renderMatch(match) {
+    const status =
+        getMatchStatus(match);
+
+    const live =
+        isLive(match);
+
+    const competition =
+        match.competition || {};
+
+    const homeTeam =
+        match.home_team || {};
+
+    const awayTeam =
+        match.away_team || {};
 
     container.innerHTML = `
-        <section class="match-details">
+        <section class="match-header">
 
             <a
                 href="/"
@@ -135,46 +268,66 @@ function renderMatch(match) {
                 ← Back to matches
             </a>
 
-            <div class="details-competition">
+
+            <div class="competition-header">
 
                 ${
-                    match.competition.logo_url
+                    competition.logo_url
                         ? `
                             <img
-                                src="${match.competition.logo_url}"
-                                alt="${match.competition.name}"
+                                src="${escapeHtml(
+                                    competition.logo_url
+                                )}"
+                                alt="${escapeHtml(
+                                    competition.name
+                                )}"
+                                loading="lazy"
                             >
                         `
                         : ""
                 }
 
-                <span>
-                    ${match.competition.name}
+                <span class="competition-name">
+                    ${
+                        escapeHtml(
+                            competition.name ||
+                            "Football"
+                        )
+                    }
                 </span>
 
             </div>
 
-            <div class="details-date">
-                ${formatMatchDate(match.kickoff_at)}
+
+            <div class="match-date">
+                ${formatMatchDate(
+                    match.kickoff_at
+                )}
             </div>
 
-            <div class="details-score">
 
-                ${createTeam(match.home_team)}
+            <div class="match-scoreboard">
+
+                ${createTeam(homeTeam)}
+
 
                 <div class="details-result">
 
-                    <strong>
-                        ${match.home_score}
+                    <strong
+                        class="details-score-value"
+                    >
+                        ${escapeHtml(
+                            match.home_score
+                        )}
                         -
-                        ${match.away_score}
+                        ${escapeHtml(
+                            match.away_score
+                        )}
                     </strong>
 
                     <span
                         class="match-status ${
-                            status === "LIVE"
-                                ? "live"
-                                : ""
+                            live ? "live" : ""
                         }"
                     >
                         ${status}
@@ -182,20 +335,31 @@ function renderMatch(match) {
 
                 </div>
 
-                ${createTeam(match.away_team)}
+
+                ${createTeam(awayTeam)}
 
             </div>
 
         </section>
 
+
         <section class="events-section">
 
             <div class="section-heading">
-                <h2>Match Events</h2>
+
+                <h2>
+                    Match Events
+                </h2>
+
             </div>
 
+
             <div class="events-list">
-                ${events}
+
+                ${createEvents(
+                    match.events
+                )}
+
             </div>
 
         </section>
@@ -203,34 +367,92 @@ function renderMatch(match) {
 }
 
 
+function showError(message) {
+    container.innerHTML = `
+        <div class="match-error">
+
+            <strong>
+                Unable to load match.
+            </strong>
+
+            <p>
+                ${escapeHtml(
+                    message ||
+                    "Please try again."
+                )}
+            </p>
+
+            <a
+                href="/"
+                class="back-link"
+            >
+                ← Back to matches
+            </a>
+
+        </div>
+    `;
+}
+
+
+function getMatchId() {
+    const parts =
+        window.location.pathname
+            .split("/")
+            .filter(Boolean);
+
+    return parts.at(-1);
+}
+
+
 async function loadMatch() {
-    const matchId = window.location.pathname
-        .split("/")
-        .pop();
+    const matchId =
+        getMatchId();
+
+    if (!matchId) {
+        showError(
+            "Match ID is missing."
+        );
+
+        return;
+    }
 
     try {
         const response = await fetch(
-            `/api/v1/matches/${matchId}`
+            `/api/v1/matches/${encodeURIComponent(
+                matchId
+            )}`,
+            {
+                headers: {
+                    Accept:
+                        "application/json",
+                },
+            }
         );
 
         if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error(
+                    "Match not found."
+                );
+            }
+
             throw new Error(
-                "Failed to load match"
+                `Request failed with status ${response.status}.`
             );
         }
 
-        const match = await response.json();
+        const match =
+            await response.json();
 
         renderMatch(match);
 
     } catch (error) {
         console.error(error);
 
-        container.innerHTML = `
-            <div class="loading">
-                Unable to load match.
-            </div>
-        `;
+        showError(
+            error.message ||
+            "Please check your connection and try again."
+        );
     }
 }
 

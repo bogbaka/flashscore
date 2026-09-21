@@ -27,8 +27,6 @@ def get_feed(
     ),
     db: Session = Depends(get_db),
 ):
-    service = FeedService(db)
-
     selected_date = (
         feed_date
         or datetime.now(timezone.utc).date()
@@ -41,6 +39,8 @@ def get_feed(
     )
 
     end = start + timedelta(days=1)
+
+    service = FeedService(db)
 
     return service.get_feed(
         start=start,
