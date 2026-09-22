@@ -1,5 +1,5 @@
 from sqlalchemy import ForeignKey, Index, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base
 
@@ -24,7 +24,9 @@ class Favorite(Base):
         ),
     )
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+    )
 
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id"),
@@ -39,4 +41,21 @@ class Favorite(Base):
     competition_id: Mapped[int | None] = mapped_column(
         ForeignKey("competitions.id"),
         nullable=True,
+    )
+
+    user = relationship(
+        "User",
+        back_populates="favorites",
+    )
+
+    team = relationship(
+        "Team",
+        back_populates="favorites",
+        lazy="joined",
+    )
+
+    competition = relationship(
+        "Competition",
+        back_populates="favorites",
+        lazy="joined",
     )

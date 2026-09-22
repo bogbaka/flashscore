@@ -7,7 +7,9 @@ from app.database.base import Base
 class Competition(Base):
     __tablename__ = "competitions"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+    )
 
     provider_id: Mapped[int | None] = mapped_column(
         nullable=True,
@@ -29,6 +31,12 @@ class Competition(Base):
 
     seasons = relationship(
         "Season",
+        back_populates="competition",
+        lazy="selectin",
+    )
+
+    favorites = relationship(
+        "Favorite",
         back_populates="competition",
         lazy="selectin",
     )
