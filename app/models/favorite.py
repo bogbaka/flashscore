@@ -1,4 +1,9 @@
-from sqlalchemy import ForeignKey, Index, UniqueConstraint
+from sqlalchemy import (
+    CheckConstraint,
+    ForeignKey,
+    Index,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base
@@ -17,6 +22,11 @@ class Favorite(Base):
             "user_id",
             "competition_id",
             name="uq_favorites_user_competition",
+        ),
+        CheckConstraint(
+            "(team_id IS NOT NULL) != "
+            "(competition_id IS NOT NULL)",
+            name="ck_favorites_exactly_one_target",
         ),
         Index(
             "ix_favorites_user_id",
