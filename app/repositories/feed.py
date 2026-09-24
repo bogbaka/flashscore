@@ -95,12 +95,16 @@ class FeedRepository:
 
     def get_finished_matches(
         self,
+        start: datetime,
+        end: datetime,
         limit: int = 20,
     ) -> list[Match]:
         statement = (
             self._base_query()
             .where(
-                Match.status.in_(FINISHED_STATUSES)
+                Match.status.in_(FINISHED_STATUSES),
+                Match.kickoff_at >= start,
+                Match.kickoff_at < end,
             )
             .order_by(Match.kickoff_at.desc())
             .limit(limit)

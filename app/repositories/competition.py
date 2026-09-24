@@ -115,7 +115,10 @@ class CompetitionRepository:
 
         statement = (
             statement
-            .order_by(Match.kickoff_at)
+            .order_by(
+    Match.kickoff_at,
+    Match.id,
+)
             .offset(offset)
             .limit(limit)
         )

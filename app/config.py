@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     )
     football_api_timeout: float = 10.0
 
+    football_current_season: int = 2026
+
     football_api_daily_limit: int = 100
     football_api_reserved_requests: int = 20
 

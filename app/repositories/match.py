@@ -11,7 +11,9 @@ LIVE_STATUSES = (
     "HT",
     "2H",
     "ET",
+    "BT",
     "P",
+    "LIVE",
 )
 
 
@@ -31,7 +33,10 @@ class MatchRepository:
                 joinedload(Match.home_team),
                 joinedload(Match.away_team),
             )
-            .order_by(Match.kickoff_at)
+            .order_by(
+                Match.kickoff_at,
+                Match.id,
+            )
         )
 
         return self._paginate(
@@ -56,7 +61,10 @@ class MatchRepository:
                 joinedload(Match.home_team),
                 joinedload(Match.away_team),
             )
-            .order_by(Match.kickoff_at)
+            .order_by(
+                Match.kickoff_at,
+                Match.id,
+            )
         )
 
         return self._paginate(
@@ -80,7 +88,10 @@ class MatchRepository:
                 joinedload(Match.home_team),
                 joinedload(Match.away_team),
             )
-            .order_by(Match.kickoff_at)
+            .order_by(
+                Match.kickoff_at,
+                Match.id,
+            )
         )
 
         return self._paginate(
@@ -107,7 +118,10 @@ class MatchRepository:
                 joinedload(Match.home_team),
                 joinedload(Match.away_team),
             )
-            .order_by(Match.kickoff_at)
+            .order_by(
+                Match.kickoff_at,
+                Match.id,
+            )
         )
 
         return self._paginate(

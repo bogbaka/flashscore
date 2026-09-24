@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, time, timedelta, timezone
+from enum import Enum
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -16,14 +17,43 @@ router = APIRouter(
 )
 
 
+class MatchStatus(str, Enum):
+    SCHEDULED = "scheduled"
+    TBD = "TBD"
+    NS = "NS"
+    FIRST_HALF = "1H"
+    HALF_TIME = "HT"
+    SECOND_HALF = "2H"
+    EXTRA_TIME = "ET"
+    BREAK_TIME = "BT"
+    PENALTIES = "P"
+    LIVE = "LIVE"
+    FINISHED = "FT"
+    AFTER_EXTRA_TIME = "AET"
+    PENALTY_FINISHED = "PEN"
+    POSTPONED = "PST"
+    CANCELLED = "CANC"
+    ABANDONED = "ABD"
+    AWARDED = "AWD"
+    WALKOVER = "WO"
+
+
 @router.get(
     "/",
     response_model=MatchListResponse,
 )
 def get_matches(
-    status: str | None = Query(default=None),
-    date: str | None = Query(default=None),
-    page: int = Query(default=1, ge=1),
+    status: MatchStatus | None = Query(
+        default=None,
+    ),
+    match_date: date | None = Query(
+        default=None,
+        alias="date",
+    ),
+    page: int = Query(
+        default=1,
+        ge=1,
+    ),
     limit: int = Query(
         default=20,
         ge=1,
@@ -31,23 +61,27 @@ def get_matches(
     ),
     db: Session = Depends(get_db),
 ):
+    if status and match_date:
+        raise HTTPException(
+            status_code=400,
+            detail="Use either status or date, not both",
+        )
+
     service = MatchService(db)
 
     if status:
         matches, total = service.get_matches_by_status(
-            status=status,
+            status=status.value,
             page=page,
             limit=limit,
         )
 
-    elif date:
-        try:
-            start = datetime.fromisoformat(date)
-        except ValueError as error:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid date format",
-            ) from error
+    elif match_date:
+        start = datetime.combine(
+            match_date,
+            time.min,
+            tzinfo=timezone.utc,
+        )
 
         end = start + timedelta(days=1)
 
@@ -105,7 +139,9 @@ def get_match_events(
 ):
     service = MatchService(db)
 
-    match = service.get_match(match_id)
+    match = service.get_match(
+        match_id
+    )
 
     if match is None:
         raise HTTPException(

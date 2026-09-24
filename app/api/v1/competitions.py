@@ -9,6 +9,7 @@ from app.schemas.standing import StandingResponse
 from app.services.competition import CompetitionService
 from app.services.standing import StandingService
 
+
 router = APIRouter(
     prefix="/competitions",
     tags=["Competitions"],
@@ -20,8 +21,15 @@ router = APIRouter(
     response_model=CompetitionListResponse,
 )
 def get_competitions(
-    page: int = Query(default=1, ge=1),
-    limit: int = Query(default=20, ge=1, le=100),
+    page: int = Query(
+        default=1,
+        ge=1,
+    ),
+    limit: int = Query(
+        default=20,
+        ge=1,
+        le=100,
+    ),
     db: Session = Depends(get_db),
 ):
     service = CompetitionService(db)
@@ -49,7 +57,9 @@ def get_competition(
 ):
     service = CompetitionService(db)
 
-    competition = service.get_competition(competition_id)
+    competition = service.get_competition(
+        competition_id
+    )
 
     if competition is None:
         raise HTTPException(
@@ -66,13 +76,22 @@ def get_competition(
 )
 def get_competition_matches(
     competition_id: int,
-    page: int = Query(default=1, ge=1),
-    limit: int = Query(default=20, ge=1, le=100),
+    page: int = Query(
+        default=1,
+        ge=1,
+    ),
+    limit: int = Query(
+        default=20,
+        ge=1,
+        le=100,
+    ),
     db: Session = Depends(get_db),
 ):
     service = CompetitionService(db)
 
-    competition = service.get_competition(competition_id)
+    competition = service.get_competition(
+        competition_id
+    )
 
     if competition is None:
         raise HTTPException(
@@ -104,7 +123,9 @@ def get_competition_standings(
 ):
     competition_service = CompetitionService(db)
 
-    competition = competition_service.get_competition(competition_id)
+    competition = competition_service.get_competition(
+        competition_id
+    )
 
     if competition is None:
         raise HTTPException(

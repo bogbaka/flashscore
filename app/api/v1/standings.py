@@ -17,7 +17,10 @@ router = APIRouter(
     response_model=list[StandingResponse],
 )
 def get_standings(
-    competition_id: int = Query(default=1, ge=1),
+    competition_id: int = Query(
+        ...,
+        ge=1,
+    ),
     db: Session = Depends(get_db),
 ):
     service = StandingService(db)

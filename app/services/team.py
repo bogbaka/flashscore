@@ -1,8 +1,5 @@
 from sqlalchemy.orm import Session
 
-from app.models.match import Match
-from app.models.standing import Standing
-from app.models.team import Team
 from app.repositories.team import TeamRepository
 
 
@@ -14,7 +11,7 @@ class TeamService:
         self,
         page: int = 1,
         limit: int = 20,
-    ) -> tuple[list[Team], int]:
+    ):
         return self.repository.get_all(
             page=page,
             limit=limit,
@@ -23,17 +20,15 @@ class TeamService:
     def get_team(
         self,
         team_id: int,
-    ) -> Team | None:
-        return self.repository.get_by_id(
-            team_id
-        )
+    ):
+        return self.repository.get_by_id(team_id)
 
     def get_team_matches(
         self,
         team_id: int,
         page: int = 1,
         limit: int = 20,
-    ) -> tuple[list[Match], int]:
+    ):
         return self.repository.get_matches(
             team_id=team_id,
             page=page,
@@ -43,7 +38,11 @@ class TeamService:
     def get_team_standing(
         self,
         team_id: int,
-    ) -> Standing | None:
+        competition_id: int,
+        season_id: int,
+    ):
         return self.repository.get_standing(
-            team_id
+            team_id=team_id,
+            competition_id=competition_id,
+            season_id=season_id,
         )

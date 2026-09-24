@@ -45,6 +45,8 @@ class FeedService:
 
         finished_matches = (
             self.repository.get_finished_matches(
+                start=start,
+                end=end,
                 limit=limit,
             )
         )

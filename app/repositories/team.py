@@ -19,7 +19,7 @@ class TeamRepository:
 
         statement = (
             select(Team)
-            .order_by(Team.name)
+            .order_by(Team.name, Team.id)
             .offset(offset)
             .limit(limit)
         )
@@ -54,7 +54,10 @@ class TeamRepository:
                 (Match.home_team_id == team_id)
                 | (Match.away_team_id == team_id)
             )
-            .order_by(Match.kickoff_at)
+            .order_by(
+                Match.kickoff_at,
+                Match.id,
+            )
             .offset(offset)
             .limit(limit)
         )
@@ -77,11 +80,16 @@ class TeamRepository:
     def get_standing(
         self,
         team_id: int,
+        competition_id: int,
+        season_id: int,
     ) -> Standing | None:
         statement = (
             select(Standing)
-            .where(Standing.team_id == team_id)
-            .order_by(Standing.position)
+            .where(
+                Standing.team_id == team_id,
+                Standing.competition_id == competition_id,
+                Standing.season_id == season_id,
+            )
         )
 
         return self.db.scalar(statement)

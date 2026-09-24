@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
@@ -28,9 +28,17 @@ def search(
     ),
     db: Session = Depends(get_db),
 ):
+    query = q.strip()
+
+    if not query:
+        raise HTTPException(
+            status_code=422,
+            detail="Search query cannot be empty",
+        )
+
     service = SearchService(db)
 
     return service.search(
-        query=q.strip(),
+        query=query,
         limit=limit,
     )
