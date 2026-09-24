@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import SUPPORTED_COMPETITIONS
+from app.integrations.football_api.client import FootballAPIClient
 from app.models.match import Match
 from app.models.season import Season
 from app.services.competition_sync import CompetitionSyncService
@@ -12,14 +13,39 @@ from app.services.team_sync import TeamSyncService
 
 
 class FootballSyncService:
-    def __init__(self, db: Session):
+    def __init__(
+        self,
+        db: Session,
+        client: FootballAPIClient | None = None,
+    ):
         self.db = db
+        self.client = client or FootballAPIClient()
+        self._owns_client = client is None
 
-        self.competition_sync = CompetitionSyncService(db)
-        self.team_sync = TeamSyncService(db)
-        self.match_sync = MatchSyncService(db)
-        self.match_event_sync = MatchEventSyncService(db)
-        self.standing_sync = StandingSyncService(db)
+        self.competition_sync = CompetitionSyncService(
+            db,
+            football_api=self.client,
+        )
+
+        self.team_sync = TeamSyncService(
+            db,
+            client=self.client,
+        )
+
+        self.match_sync = MatchSyncService(
+            db,
+            client=self.client,
+        )
+
+        self.match_event_sync = MatchEventSyncService(
+            db,
+            client=self.client,
+        )
+
+        self.standing_sync = StandingSyncService(
+            db,
+            client=self.client,
+        )
 
     def get_or_create_season(
         self,
@@ -130,4 +156,5 @@ class FootballSyncService:
             raise
 
     def close(self) -> None:
-        self.match_event_sync.close()
+        if self._owns_client:
+            self.client.close()

@@ -10,9 +10,14 @@ from app.models.team import Team
 
 
 class MatchSyncService:
-    def __init__(self, db: Session):
+    def __init__(
+        self,
+        db: Session,
+        client: FootballAPIClient | None = None,
+    ):
         self.db = db
-        self.client = FootballAPIClient()
+        self.client = client or FootballAPIClient()
+        self._owns_client = client is None
 
     def sync_matches(
         self,
@@ -81,8 +86,12 @@ class MatchSyncService:
             home_provider_id = fixture_teams["home"]["id"]
             away_provider_id = fixture_teams["away"]["id"]
 
-            home_team = teams_by_provider_id.get(home_provider_id)
-            away_team = teams_by_provider_id.get(away_provider_id)
+            home_team = teams_by_provider_id.get(
+                home_provider_id
+            )
+            away_team = teams_by_provider_id.get(
+                away_provider_id
+            )
 
             if home_team is None or away_team is None:
                 skipped_fixtures.append(
@@ -140,3 +149,7 @@ class MatchSyncService:
         self.db.flush()
 
         return matches
+
+    def close(self) -> None:
+        if self._owns_client:
+            self.client.close()

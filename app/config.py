@@ -7,6 +7,10 @@ class Settings(BaseSettings):
     app_env: str = "development"
     debug: bool = True
 
+    live_sync_enabled: bool = True
+    live_sync_interval_seconds: int = 60
+    live_event_refresh_interval_seconds: int = 300
+
     football_api_key: str
     football_api_base_url: str = (
         "https://v3.football.api-sports.io"

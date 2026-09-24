@@ -6,7 +6,15 @@ from app.models.match import Match
 from app.services.match_event_sync import MatchEventSyncService
 
 
-LIVE_STATUSES = {"1H", "HT", "2H", "ET", "BT", "P", "LIVE"}
+LIVE_STATUSES = {
+    "1H",
+    "HT",
+    "2H",
+    "ET",
+    "BT",
+    "P",
+    "LIVE",
+}
 
 
 class LiveMatchService:
@@ -18,9 +26,21 @@ class LiveMatchService:
     ):
         self.db = db
         self.client = client or FootballAPIClient()
-        self.event_sync = event_sync or MatchEventSyncService(db)
+        self.event_sync = (
+            event_sync
+            or MatchEventSyncService(
+                db,
+                client=self.client,
+            )
+        )
 
-    def refresh_score(self, fixture_id: int) -> Match:
+        self._owns_client = client is None
+        self._owns_event_sync = event_sync is None
+
+    def refresh_score(
+        self,
+        fixture_id: int,
+    ) -> Match:
         match = self.db.scalar(
             select(Match).where(
                 Match.provider_id == fixture_id
@@ -46,18 +66,31 @@ class LiveMatchService:
 
         fixture = fixtures[0]
         goals = fixture.get("goals", {})
-        status = fixture.get("fixture", {}).get("status", {})
+        status = fixture.get(
+            "fixture",
+            {},
+        ).get("status", {})
 
-        match.home_score = goals.get("home") or 0
-        match.away_score = goals.get("away") or 0
-        match.status = status.get("short", match.status)
+        match.home_score = (
+            goals.get("home") or 0
+        )
+        match.away_score = (
+            goals.get("away") or 0
+        )
+        match.status = status.get(
+            "short",
+            match.status,
+        )
 
         self.db.commit()
         self.db.refresh(match)
 
         return match
 
-    def refresh_events(self, fixture_id: int) -> list:
+    def refresh_events(
+        self,
+        fixture_id: int,
+    ) -> list:
         match = self.db.scalar(
             select(Match).where(
                 Match.provider_id == fixture_id
@@ -70,7 +103,9 @@ class LiveMatchService:
             )
 
         try:
-            events = self.event_sync.sync_events(fixture_id)
+            events = self.event_sync.sync_events(
+                fixture_id
+            )
 
             self.db.commit()
 
@@ -85,13 +120,23 @@ class LiveMatchService:
         fixture_id: int,
         refresh_events: bool = True,
     ) -> Match:
-        match = self.refresh_score(fixture_id)
+        match = self.refresh_score(
+            fixture_id
+        )
 
-        if refresh_events and match.status in LIVE_STATUSES:
-            self.refresh_events(fixture_id)
+        if (
+            refresh_events
+            and match.status in LIVE_STATUSES
+        ):
+            self.refresh_events(
+                fixture_id
+            )
 
         return match
 
     def close(self) -> None:
-        self.client.close()
-        self.event_sync.close()
+        if self._owns_event_sync:
+            self.event_sync.close()
+
+        if self._owns_client:
+            self.client.close()

@@ -1,27 +1,45 @@
+import threading
 import time
 from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database.session import SessionLocal
 from app.integrations.football_api.client import FootballAPIClient
 from app.models.match import Match
 from app.repositories.feed import LIVE_STATUSES
 from app.services.live_match import LiveMatchService
+from app.services.match_event_sync import MatchEventSyncService
 
 
 class LiveSyncWorker:
     def __init__(
         self,
-        interval_seconds: int = 60,
-        event_refresh_interval: int = 300,
+        interval_seconds: int | None = None,
+        event_refresh_interval: int | None = None,
+        client: FootballAPIClient | None = None,
+        stop_event: threading.Event | None = None,
     ):
-        self.interval_seconds = interval_seconds
-        self.event_refresh_interval = event_refresh_interval
+        self.interval_seconds = (
+            interval_seconds
+            if interval_seconds is not None
+            else settings.live_sync_interval_seconds
+        )
+
+        self.event_refresh_interval = (
+            event_refresh_interval
+            if event_refresh_interval is not None
+            else settings.live_event_refresh_interval_seconds
+        )
+
         self.last_event_refresh: dict[int, float] = {}
 
-        self.client = FootballAPIClient()
+        self.client = client or FootballAPIClient()
+        self._owns_client = client is None
+
+        self.stop_event = stop_event or threading.Event()
 
     def get_live_matches(
         self,
@@ -51,13 +69,21 @@ class LiveSyncWorker:
 
     def run_once(self) -> None:
         db = SessionLocal()
-
-        service = LiveMatchService(
-            db=db,
-            client=self.client,
-        )
+        event_sync = None
+        service = None
 
         try:
+            event_sync = MatchEventSyncService(
+                db,
+                client=self.client,
+            )
+
+            service = LiveMatchService(
+                db=db,
+                client=self.client,
+                event_sync=event_sync,
+            )
+
             matches = self.get_live_matches(db)
 
             if not matches:
@@ -73,6 +99,9 @@ class LiveSyncWorker:
             )
 
             for match in matches:
+                if self.stop_event.is_set():
+                    break
+
                 fixture_id = match.provider_id
 
                 if fixture_id is None:
@@ -123,10 +152,22 @@ class LiveSyncWorker:
                     )
 
         finally:
+            if service is not None:
+                service.close()
+
+            if event_sync is not None:
+                event_sync.close()
+
             db.close()
 
+    def stop(self) -> None:
+        self.stop_event.set()
+
     def close(self) -> None:
-        self.client.close()
+        self.stop()
+
+        if self._owns_client:
+            self.client.close()
 
     def run_forever(self) -> None:
         print(
@@ -136,18 +177,17 @@ class LiveSyncWorker:
         )
 
         try:
-            while True:
+            while not self.stop_event.is_set():
                 self.run_once()
-                time.sleep(self.interval_seconds)
+
+                self.stop_event.wait(
+                    self.interval_seconds
+                )
 
         finally:
             self.close()
 
 
 if __name__ == "__main__":
-    worker = LiveSyncWorker(
-        interval_seconds=60,
-        event_refresh_interval=300,
-    )
-
+    worker = LiveSyncWorker()
     worker.run_forever()

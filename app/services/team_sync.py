@@ -5,9 +5,14 @@ from app.models.team import Team
 
 
 class TeamSyncService:
-    def __init__(self, db: Session):
+    def __init__(
+        self,
+        db: Session,
+        client: FootballAPIClient | None = None,
+    ):
         self.db = db
-        self.client = FootballAPIClient()
+        self.client = client or FootballAPIClient()
+        self._owns_client = client is None
 
     def sync_teams(
         self,
@@ -30,7 +35,9 @@ class TeamSyncService:
 
             team = (
                 self.db.query(Team)
-                .filter(Team.provider_id == provider_id)
+                .filter(
+                    Team.provider_id == provider_id
+                )
                 .first()
             )
 
@@ -49,7 +56,10 @@ class TeamSyncService:
 
             teams.append(team)
 
-        # Make newly-created teams visible to the next sync step.
         self.db.flush()
 
         return teams
+
+    def close(self) -> None:
+        if self._owns_client:
+            self.client.close()

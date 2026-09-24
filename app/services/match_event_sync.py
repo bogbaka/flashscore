@@ -8,9 +8,14 @@ from app.models.team import Team
 
 
 class MatchEventSyncService:
-    def __init__(self, db: Session):
+    def __init__(
+        self,
+        db: Session,
+        client: FootballAPIClient | None = None,
+    ):
         self.db = db
-        self.client = FootballAPIClient()
+        self.client = client or FootballAPIClient()
+        self._owns_client = client is None
 
     def sync_events(
         self,
@@ -58,13 +63,20 @@ class MatchEventSyncService:
             event = MatchEvent(
                 match_id=match.id,
                 minute=item["time"].get("elapsed"),
-                event_type=item.get("type", "Unknown"),
+                event_type=item.get(
+                    "type",
+                    "Unknown",
+                ),
                 player_name=(
                     player.get("name")
                     if player
                     else None
                 ),
-                team_id=team.id if team else None,
+                team_id=(
+                    team.id
+                    if team
+                    else None
+                ),
                 description=item.get("detail"),
             )
 
@@ -79,4 +91,5 @@ class MatchEventSyncService:
         return events
 
     def close(self) -> None:
-        self.client.close()
+        if self._owns_client:
+            self.client.close()

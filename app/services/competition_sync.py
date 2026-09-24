@@ -18,6 +18,7 @@ class CompetitionSyncService:
             football_api
             or FootballAPIClient()
         )
+        self._owns_client = football_api is None
 
     def sync_competition(
         self,
@@ -88,3 +89,7 @@ class CompetitionSyncService:
         self.db.flush()
 
         return competition
+
+    def close(self) -> None:
+        if self._owns_client:
+            self.football_api.close()

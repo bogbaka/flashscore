@@ -8,9 +8,14 @@ from app.models.team import Team
 
 
 class StandingSyncService:
-    def __init__(self, db: Session):
+    def __init__(
+        self,
+        db: Session,
+        client: FootballAPIClient | None = None,
+    ):
         self.db = db
-        self.client = FootballAPIClient()
+        self.client = client or FootballAPIClient()
+        self._owns_client = client is None
 
     def sync_standings(
         self,
@@ -86,3 +91,7 @@ class StandingSyncService:
             standings.append(standing)
 
         return standings
+
+    def close(self) -> None:
+        if self._owns_client:
+            self.client.close()
