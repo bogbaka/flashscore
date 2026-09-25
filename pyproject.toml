@@ -2,7 +2,25 @@
 name = "football-livescore"
 version = "0.1.0"
 description = "Football LiveScore API"
-requires-python = ">=3.12"
+requires-python = "~=3.12.0"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "httpx",
+    "SQLAlchemy",
+    "psycopg[binary]",
+    "python-dotenv",
+    "alembic",
+    "pydantic-settings",
+    "pwdlib[argon2]",
+    "PyJWT",
+    "email-validator",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
 
 [tool.vercel]
 entrypoint = "app.main:app"
