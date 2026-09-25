@@ -21,12 +21,17 @@ def get_standings(
         ...,
         ge=1,
     ),
+    season: int | None = Query(
+        None,
+        ge=1900,
+    ),
     db: Session = Depends(get_db),
 ):
     service = StandingService(db)
 
     standings = service.get_competition_standings(
-        competition_id
+        competition_id,
+        season,
     )
 
     if not standings:
@@ -44,12 +49,17 @@ def get_standings(
 )
 def get_competition_standings(
     competition_id: int,
+    season: int | None = Query(
+        None,
+        ge=1900,
+    ),
     db: Session = Depends(get_db),
 ):
     service = StandingService(db)
 
     standings = service.get_competition_standings(
-        competition_id
+        competition_id,
+        season,
     )
 
     if not standings:

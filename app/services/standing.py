@@ -11,9 +11,11 @@ class StandingService:
     def get_competition_standings(
         self,
         competition_id: int,
+        season_year: int | None = None,
     ) -> list[Standing]:
         return self.repository.get_by_competition(
-            competition_id
+            competition_id,
+            season_year,
         )
 
     def get_team_standing(
