@@ -30,11 +30,13 @@ class CompetitionService:
     def get_competition_matches(
         self,
         competition_id: int,
+        season_year: int | None = None,
         page: int = 1,
         limit: int = 20,
     ) -> tuple[list[Match], int]:
         return self.repository.get_matches(
             competition_id=competition_id,
+            season_year=season_year,
             page=page,
             limit=limit,
         )

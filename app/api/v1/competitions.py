@@ -85,6 +85,10 @@ def get_competition_matches(
         ge=1,
         le=100,
     ),
+    season: int | None = Query(
+        default=None,
+        ge=1900,
+    ),
     db: Session = Depends(get_db),
 ):
     service = CompetitionService(db)
@@ -101,6 +105,7 @@ def get_competition_matches(
 
     matches, total = service.get_competition_matches(
         competition_id=competition_id,
+        season_year=season,
         page=page,
         limit=limit,
     )
