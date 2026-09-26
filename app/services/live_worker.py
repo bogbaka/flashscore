@@ -108,6 +108,8 @@ class LiveSyncWorker:
                     continue
 
                 try:
+                    previous_status = match.status
+
                     refreshed = service.refresh_score(
                         fixture_id
                     )
@@ -139,10 +141,28 @@ class LiveSyncWorker:
                             f"fixture {fixture_id}."
                         )
 
+                    elif (
+                        previous_status in LIVE_STATUSES
+                        and refreshed.status not in LIVE_STATUSES
+                    ):
+                        service.refresh_events(
+                            fixture_id
+                        )
+
+                        self.last_event_refresh.pop(
+                            fixture_id,
+                            None
+                        )
+
+                        print(
+                            f"  Final events refreshed for "
+                            f"fixture {fixture_id}."
+                        )
+
                     elif refreshed.status not in LIVE_STATUSES:
                         self.last_event_refresh.pop(
                             fixture_id,
-                            None,
+                            None
                         )
 
                 except Exception as error:

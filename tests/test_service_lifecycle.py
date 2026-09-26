@@ -139,3 +139,50 @@ def test_live_worker_owns_created_client():
         assert worker._owns_client is True
     finally:
         worker.close()
+
+
+def test_live_worker_refreshes_final_match_events(
+    db_session,
+    monkeypatch,
+):
+    client = Mock(spec=FootballAPIClient)
+
+    worker = LiveSyncWorker(
+        client=client,
+    )
+
+    live_match = Mock()
+    live_match.provider_id = 1037956
+    live_match.status = "2H"
+
+    refreshed_match = Mock()
+    refreshed_match.provider_id = 1037956
+    refreshed_match.status = "FT"
+
+    mock_service = Mock()
+    mock_service.refresh_score.return_value = refreshed_match
+
+    monkeypatch.setattr(
+        "app.services.live_worker.LiveMatchService",
+        lambda **kwargs: mock_service,
+    )
+
+    monkeypatch.setattr(
+        worker,
+        "get_live_matches",
+        lambda db: [live_match],
+    )
+
+    worker.run_once()
+
+    mock_service.refresh_score.assert_called_once_with(
+        1037956
+    )
+
+    mock_service.refresh_events.assert_called_once_with(
+        1037956
+    )
+
+    worker.close()
+
+    client.close.assert_not_called()
